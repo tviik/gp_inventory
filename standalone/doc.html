@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Version Inventory — Документация</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #111317;
+            color: #e5e7eb;
+        }
+
+        a {
+            color: #60a5fa;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 260px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: #020617;
+            border-right: 1px solid #1f2933;
+            padding: 18px 16px;
+            position: sticky;
+            top: 0;
+            align-self: flex-start;
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 6px;
+        }
+
+        .logo span {
+            color: #60a5fa;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-bottom: 16px;
+        }
+
+        .toc-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+
+        .toc {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+            font-size: 13px;
+        }
+
+        .toc li {
+            margin-bottom: 4px;
+        }
+
+        .toc a {
+            text-decoration: none;
+            color: #9ca3af;
+        }
+
+        .toc a:hover {
+            color: #e5e7eb;
+        }
+
+        .toc-sub {
+            list-style: none;
+            padding-left: 12px;
+            margin: 4px 0 8px 0;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #111827;
+            border: 1px solid #1f2937;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .pill-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: #22c55e;
+        }
+
+        .main {
+            padding: 24px 28px;
+        }
+
+        h1 {
+            margin: 0 0 6px 0;
+            font-size: 24px;
+        }
+
+        h2 {
+            margin-top: 28px;
+            margin-bottom: 8px;
+            font-size: 18px;
+            border-bottom: 1px solid #1f2933;
+            padding-bottom: 4px;
+        }
+
+        h3 {
+            margin-top: 16px;
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+
+        p {
+            margin: 4px 0 10px 0;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #d1d5db;
+        }
+
+        code {
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            background: #020617;
+            border-radius: 4px;
+            padding: 2px 4px;
+        }
+
+        pre {
+            background: #020617;
+            border-radius: 6px;
+            padding: 10px 12px;
+            overflow-x: auto;
+            border: 1px solid #1f2933;
+            font-size: 12px;
+        }
+
+        ul, ol {
+            margin: 4px 0 10px 18px;
+            padding-left: 6px;
+            font-size: 14px;
+            color: #d1d5db;
+        }
+
+        li {
+            margin-bottom: 3px;
+        }
+
+        .tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: #111827;
+            border: 1px solid #1f2937;
+            color: #9ca3af;
+            margin-right: 4px;
+        }
+
+        .card {
+            border-radius: 10px;
+            border: 1px solid #1f2933;
+            background: radial-gradient(circle at top left, #020617 0, #020617 35%, #020617 100%);
+            padding: 12px 14px;
+            margin: 10px 0;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #e5e7eb;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: #0f172a;
+            border: 1px solid #1f2937;
+            color: #9ca3af;
+            margin-left: 6px;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: #3b82f6;
+            margin-right: 4px;
+        }
+
+        /* flow diagram */
+
+        .flow-wrapper {
+            margin: 10px 0 16px 0;
+            padding: 14px 14px 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #1f2933;
+            background: radial-gradient(circle at top left, rgba(37,99,235,0.18), transparent 55%);
+        }
+
+        .flow-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #e5e7eb;
+        }
+
+        .flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .flow-node {
+            min-width: 120px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: #020617;
+            border: 1px solid #1f2937;
+            font-size: 11px;
+            position: relative;
+            box-shadow: 0 0 0 1px rgba(15,23,42,0.7);
+        }
+
+        .flow-node-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #e5e7eb;
+        }
+
+        .flow-node-sub {
+            font-size: 10px;
+            color: #9ca3af;
+        }
+
+        .flow-arrow {
+            font-size: 18px;
+            color: #4b5563;
+            position: relative;
+            padding: 0 2px;
+        }
+
+        .flow-arrow::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 70%;
+            width: 16px;
+            height: 2px;
+            background: linear-gradient(90deg, #4b5563, #60a5fa);
+            transform: translateX(-50%);
+            animation: flow-pulse 1.6s infinite;
+        }
+
+        @keyframes flow-pulse {
+            0% { opacity: 0.2; width: 6px; }
+            40% { opacity: 1; width: 18px; }
+            100% { opacity: 0.1; width: 6px; }
+        }
+
+        .note {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 880px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                position: static;
+                max-height: none;
+                border-right: none;
+                border-bottom: 1px solid #1f2933;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="logo">Version <span>Inventory</span></div>
+        <div class="subtitle">Лёгкий frontend-инструмент для инвентаризации версий и подготовки мониторинга.</div>
+
+        <div class="pill">
+            <span class="pill-dot"></span>
+            HTML + CSS + vanilla JS · IndexedDB + WebWorkers
+        </div>
+
+        <div class="toc-title">Разделы</div>
+        <ul class="toc">
+            <li><a href="#overview">1. Что это за инструмент</a></li>
+            <li><a href="#stack">2. Технологический стек</a>
+                <ul class="toc-sub">
+                    <li><a href="#stack-frontend">2.1. Frontend</a></li>
+                    <li><a href="#stack-storage">2.2. Хранение данных</a></li>
+                    <li><a href="#stack-excel">2.3. Работа с Excel</a></li>
+                    <li><a href="#stack-monitoring">2.4. Мониторинг (Zabbix)</a></li>
+                </ul>
+            </li>
+            <li><a href="#modules">3. Архитектура и модули</a></li>
+            <li><a href="#flows">4. Поток данных и сценарии использования</a></li>
+            <li><a href="#howto">5. Как работать с инструментом</a></li>
+            <li><a href="#zabbix-howto">6. Интеграция с Zabbix</a></li>
+            <li><a href="#ext">7. Возможные расширения и масштабирование</a></li>
+            <li><a href="#internals">8. Внутреннее устройство</a></li>
+            <li><a href="#iib">9. Практические сценарии для IIB / монолита</a></li>
+            <li><a href="#roadmap">10. Идеи для следующего релиза</a></li>
+        </ul>
+
+        <div class="toc-title">Статус</div>
+        <div class="card">
+            <div class="card-title">
+                Текущий релиз<span class="badge"><span class="badge-dot"></span>v0.8</span>
+            </div>
+            <p style="font-size:12px;margin:4px 0 2px 0;">
+                ✓ IndexedDB Storage Engine<br>
+                ✓ Global Search Engine<br>
+                ✓ Zero-code SQL Engine<br>
+                ✓ Template & Zabbix Builder v2<br>
+                ✓ Dashboard Analytics<br>
+                ✓ Множественная загрузка файлов<br>
+            </p>
+        </div>
+    </aside>
+
+    <main class="main">
+        <section id="overview">
+            <h1>Version Inventory — документация</h1>
+            <p>
+                Этот инструмент решает утилитарную задачу администратора/инженера:
+                собрать и держать под контролем информацию о версиях сервисов, брокеров, монолитов и окружений,
+                быстро из Excel формировать команды/скрипты для опроса и готовить конфигурацию для мониторинга (Zabbix).
+            </p>
+
+            <h2>1. Что это за инструмент</h2>
+            <p>
+                Проект представляет собой одностраничное веб-приложение без backend:
+            </p>
+            <ul>
+                <li>данные хранятся в <code>IndexedDB</code> для больших объёмов и <code>localStorage</code> для настроек;</li>
+                <li>файлы Excel/CSV парсятся прямо в браузере через <code>WebWorkers</code> (без блокировки UI);</li>
+                <li>есть простая модель сущностей: <code>Environment</code>, <code>Host</code>, <code>Service</code>, <code>Endpoint</code>, <code>VersionSnapshot</code>;</li>
+                <li>есть Excel Workspace с интегрированным поиском по всем файлам и листам;</li>
+                <li>есть Zero-code SQL Engine для запросов к данным;</li>
+                <li>есть Template Engine для создания и управления шаблонами команд/скриптов;</li>
+                <li>есть Dashboard Analytics с визуализацией распределения версий;</li>
+                <li>есть Zabbix Agent Builder для генерации: bash-скрипта, UserParameter, инвентаря хостов.</li>
+            </ul>
+
+            <div class="flow-wrapper" id="flows">
+                <div class="flow-title">Общая схема потоков</div>
+                <div class="flow">
+                    <div class="flow-node">
+                        <div class="flow-node-title">Excel / CSV</div>
+                        <div class="flow-node-sub">Инвентаризации, списки хостов, брокеров, портов</div>
+                    </div>
+                    <div class="flow-arrow">➜</div>
+                    <div class="flow-node">
+                        <div class="flow-node-title">IndexedDB</div>
+                        <div class="flow-node-sub">Хранение файлов, листов, индексов</div>
+                    </div>
+                    <div class="flow-arrow">➜</div>
+                    <div class="flow-node">
+                        <div class="flow-node-title">Excel Workspace</div>
+                        <div class="flow-node-sub">Парсинг, поиск, фильтры, SQL-запросы</div>
+                    </div>
+                    <div class="flow-arrow">➜</div>
+                    <div class="flow-node">
+                        <div class="flow-node-title">Inventory Core</div>
+                        <div class="flow-node-sub">Environments · Hosts · Services · Endpoints · Snapshots</div>
+                    </div>
+                    <div class="flow-arrow">➜</div>
+                    <div class="flow-node">
+                        <div class="flow-node-title">Dashboard</div>
+                        <div class="flow-node-sub">Аналитика, графики, аномалии</div>
+                    </div>
+                    <div class="flow-arrow">➜</div>
+                    <div class="flow-node">
+                        <div class="flow-node-title">Templates / Zabbix</div>
+                        <div class="flow-node-sub">Скрипт + UserParameter + host;port</div>
+                    </div>
+                    <div class="flow-arrow">➜</div>
+                    <div class="flow-node">
+                        <div class="flow-node-title">Zabbix / Grafana</div>
+                        <div class="flow-node-sub">Онлайн-мониторинг версий и статусов</div>
+                    </div>
+                </div>
+                <div class="note">
+                    Шаги после "Templates / Zabbix" выполняются уже вне браузера: копирование скрипта на хост, правка
+                    <code>zabbix_agentd.conf</code>, импорт шаблонов в Zabbix.
+                </div>
+            </div>
+        </section>
+
+        <section id="stack">
+            <h2>2. Технологический стек</h2>
+
+            <h3 id="stack-frontend">2.1. Frontend</h3>
+            <p>Приложение максимально простое по стеку:</p>
+            <ul>
+                <li><span class="tag">HTML</span> одна основная страница <code>index.html</code> + отдельная <code>doc.html</code>;</li>
+                <li><span class="tag">CSS</span> свой минималистичный тёмный стиль, без фреймворков;</li>
+                <li><span class="tag">Vanilla JS</span> модульная структура: <code>app.js</code> + модули в <code>storage/</code>, <code>search/</code>, <code>sql/</code>, <code>templates/</code>, <code>dashboard/</code> без React/Vue.</li>
+            </ul>
+
+            <h3 id="stack-storage">2.2. Хранение данных</h3>
+            <p>За хранение отвечает гибридная система:</p>
+            <ul>
+                <li><span class="tag">IndexedDB</span> для больших объёмов:
+                    <ul>
+                        <li>таблица <code>files</code> — загруженные Excel/CSV файлы;</li>
+                        <li>таблица <code>sheets</code> — нормализованные данные листов;</li>
+                        <li>таблица <code>inventory</code> — сущности (environments, hosts, services, endpoints, snapshots);</li>
+                        <li>таблица <code>matrix</code> — матрица версий;</li>
+                        <li>таблица <code>templates</code> — сохранённые шаблоны команд/скриптов.</li>
+                    </ul>
+                </li>
+                <li><span class="tag">localStorage</span> для небольших настроек и флагов миграции;</li>
+                <li>автоматическая миграция данных из <code>localStorage</code> в <code>IndexedDB</code> при первом запуске;</li>
+                <li>перенос данных — через экспорт/импорт JSON.</li>
+            </ul>
+
+            <h3 id="stack-excel">2.3. Работа с Excel</h3>
+            <p>Для Excel используется SheetJS (<code>XLSX</code>) через CDN:</p>
+            <ul>
+                <li>чтение файла в браузере (без сервера);</li>
+                <li>поддержка множественной загрузки файлов;</li>
+                <li>парсинг выполняется в <code>WebWorker</code> для избежания блокировки UI;</li>
+                <li>каждый лист → нормализованная структура (columns + rows) → сохранение в IndexedDB;</li>
+                <li>колонки определяются динамически по заголовкам;</li>
+                <li>поддерживается любая структура колонок, нет жёстких форматов;</li>
+                <li>автоматическое индексирование для быстрого поиска.</li>
+            </ul>
+
+            <h3 id="stack-workers">2.4. WebWorkers</h3>
+            <p>Тяжёлые операции вынесены в фоновые потоки:</p>
+            <ul>
+                <li><span class="tag">SearchWorker</span> — построение инвертированного индекса и поиск по всем файлам/листам;</li>
+                <li>парсинг Excel выполняется асинхронно без блокировки интерфейса;</li>
+                <li>SQL-запросы выполняются в основном потоке (лёгкие операции).</li>
+            </ul>
+
+            <h3 id="stack-monitoring">2.5. Мониторинг (Zabbix-цепочка)</h3>
+            <p>Стандартная цепочка:</p>
+            <ol>
+                <li>Zabbix-агент на хосте.</li>
+                <li><code>UserParameter</code> вызывает кастомный скрипт.</li>
+                <li>Скрипт опрашивает монолит/брокер и возвращает версию.</li>
+                <li>Zabbix забирает значение, триггеры и графики строятся дальше.</li>
+            </ol>
+            <p>Инструмент закрывает часть “инвентаризация + генерация конфига и скрипта”.</p>
+        </section>
+
+        <section id="modules">
+            <h2>3. Архитектура и модули интерфейса</h2>
+
+            <h3>3.1. Core Inventory</h3>
+            <ul>
+                <li><strong>Environment</strong> — окружения.</li>
+                <li><strong>Host</strong> — хосты (id, name, ip, envId).</li>
+                <li><strong>Service</strong> — логические сервисы.</li>
+                <li><strong>Endpoint</strong> — точки опроса: id, serviceId, envId, url, method.</li>
+                <li><strong>VersionSnapshot</strong> — снимки версий endpoint’ов.</li>
+            </ul>
+
+            <h3>3.2. Excel Workspace</h3>
+            <p>Универсальная зона для работы с Excel любого формата:</p>
+            <ul>
+                <li>множественная загрузка файлов с сохранением в IndexedDB;</li>
+                <li>навигация по загруженным файлам и листам;</li>
+                <li>лист → колонки → строки;</li>
+                <li>интегрированный глобальный поиск по всем файлам и листам;</li>
+                <li>локальный поиск/фильтр по текущему листу;</li>
+                <li>строкобилдер по шаблонам <code>{ColumnName}</code>;</li>
+                <li>маппинг колонок Excel → сущности инвентаря;</li>
+                <li>Zabbix Agent Builder.</li>
+            </ul>
+
+            <h3>3.3. Global Search Engine</h3>
+            <p>Быстрый поиск по всем загруженным данным:</p>
+            <ul>
+                <li>инвертированный индекс для всех листов;</li>
+                <li>поиск по файлам, листам, колонкам, строкам;</li>
+                <li>интегрирован в Excel Workspace;</li>
+                <li>переход к найденным строкам одним кликом.</li>
+            </ul>
+
+            <h3>3.4. SQL / BI Engine</h3>
+            <p>Zero-code SQL-подобный язык запросов:</p>
+            <ul>
+                <li>SELECT, WHERE, ORDER BY, GROUP BY;</li>
+                <li>агрегации: COUNT, SUM, AVG, MIN, MAX;</li>
+                <li>JOIN между листами;</li>
+                <li>экспорт результатов в CSV/JSON.</li>
+            </ul>
+
+            <h3>3.5. Template Engine</h3>
+            <p>Управление шаблонами команд и скриптов:</p>
+            <ul>
+                <li>создание, редактирование, сохранение шаблонов;</li>
+                <li>категории: SSH, CURL, SQL, Ansible, Zabbix и др.;</li>
+                <li>применение шаблонов к строкам Excel;</li>
+                <li>тестирование шаблонов на примерах.</li>
+            </ul>
+
+            <h3>3.6. Dashboard Analytics</h3>
+            <p>Визуализация и аналитика:</p>
+            <ul>
+                <li>обзорная статистика по инвентарю;</li>
+                <li>распределение версий по окружениям и сервисам (графики);</li>
+                <li>выявление аномалий (отстающие версии);</li>
+                <li>история изменений версий.</li>
+            </ul>
+
+            <h3>3.7. Version Matrix</h3>
+            <p>Ручная матрица Service × Environment с подсветкой отличий от эталона.</p>
+
+            <h3>3.8. Zabbix Agent Builder</h3>
+            <p>Генерация из Excel:</p>
+            <ul>
+                <li>bash-скрипта;</li>
+                <li>UserParameter;</li>
+                <li>списка host;port;</li>
+                <li>пресеты для разных типов сервисов (IIB, монолиты и др.).</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>4. Поток данных и сценарии использования</h2>
+
+            <h3>4.1. Базовый сценарий: инвентаризация версий</h3>
+            <ol>
+                <li>Получить Excel с хостами/сервисами.</li>
+                <li>Загрузить в Excel Workspace (можно несколько файлов одновременно).</li>
+                <li>Использовать глобальный поиск для быстрого нахождения нужных данных.</li>
+                <li>Выбрать лист и настроить фильтр.</li>
+                <li>Через маппинг импортировать в Host/Endpoint/Service.</li>
+                <li>Использовать SQL Engine для сложных запросов и анализа данных.</li>
+                <li>Сгенерировать команды через Template Engine или строкобилдер.</li>
+                <li>Импортировать результаты опроса в VersionSnapshot.</li>
+                <li>Просмотреть Dashboard для визуализации распределения версий.</li>
+                <li>Собрать матрицу версий и принять решения (обновления, выравнивание окружений).</li>
+            </ol>
+
+            <h3>4.2. Подготовка мониторинга</h3>
+            <ol>
+                <li>По Excel собрать список брокеров/монолитов (host/port).</li>
+                <li>Использовать Template Engine для создания шаблонов скриптов.</li>
+                <li>Через Zabbix Builder получить скрипт, UserParameter и инвентарь.</li>
+                <li>Накатить это на хостах и в Zabbix.</li>
+            </ol>
+
+            <h3>4.3. Анализ данных через SQL Engine</h3>
+            <ol>
+                <li>Загрузить несколько Excel-файлов с данными.</li>
+                <li>Использовать SQL-запросы для группировки, фильтрации, агрегации.</li>
+                <li>Выполнить JOIN между листами для объединения данных.</li>
+                <li>Экспортировать результаты в CSV/JSON для дальнейшего использования.</li>
+            </ol>
+        </section>
+
+        <section id="howto">
+            <h2>5. Как работать с инструментом</h2>
+
+            <h3>5.1. Старт</h3>
+            <ol>
+                <li>Открыть <code>index.html</code> в браузере.</li>
+                <li>При необходимости — импортировать готовый JSON.</li>
+            </ol>
+
+            <h3>5.2. Импорт Excel → Inventory</h3>
+            <ol>
+                <li>Вкладка Excel Workspace → загрузить файл(ы) (поддержка множественной загрузки).</li>
+                <li>Выбрать файл из списка загруженных (если несколько).</li>
+                <li>Выбрать лист, настроить фильтр или использовать глобальный поиск.</li>
+                <li>Выбрать целевую сущность (hosts/services/endpoints...).</li>
+                <li>Проверить и при необходимости поправить маппинг полей.</li>
+                <li>Нажать "Импортировать в выбранную сущность".</li>
+            </ol>
+
+            <h3>5.3. Глобальный поиск</h3>
+            <ol>
+                <li>В Excel Workspace ввести запрос в поле "поиск по всем файлам и листам".</li>
+                <li>Нажать "Найти" или Enter.</li>
+                <li>Просмотреть результаты, сгруппированные по файлам и листам.</li>
+                <li>Нажать "Перейти" для навигации к найденной строке.</li>
+            </ol>
+
+            <h3>5.4. SQL-запросы</h3>
+            <ol>
+                <li>Вкладка SQL / BI Engine → выбрать исходный лист.</li>
+                <li>Ввести SQL-подобный запрос (например: <code>SELECT * FROM sheet WHERE column = 'value'</code>).</li>
+                <li>Нажать "Выполнить".</li>
+                <li>Просмотреть результаты, экспортировать в CSV/JSON при необходимости.</li>
+            </ol>
+
+            <h3>5.5. Работа с шаблонами</h3>
+            <ol>
+                <li>Вкладка Templates → создать новый шаблон или выбрать существующий.</li>
+                <li>Указать тип (SSH, CURL, SQL и др.) и категорию.</li>
+                <li>Написать шаблон с плейсхолдерами <code>{ColumnName}</code>.</li>
+                <li>Сохранить и протестировать на примере.</li>
+                <li>Применить к данным в Excel Workspace.</li>
+            </ol>
+
+            <h3>5.6. Dashboard Analytics</h3>
+            <ol>
+                <li>Вкладка Dashboard → просмотреть обзорную статистику.</li>
+                <li>Изучить графики распределения версий по окружениям и сервисам.</li>
+                <li>Проверить список аномалий (отстающие версии).</li>
+                <li>Просмотреть историю изменений версий.</li>
+            </ol>
+
+            <h3>5.7. Строкобилдер</h3>
+            <ol>
+                <li>Отметить нужные колонки.</li>
+                <li>Вставить их в шаблон через кнопку или использовать сохранённый шаблон.</li>
+                <li>Дописать команду (ssh/curl/скрипт).</li>
+                <li>Сформировать строки по всем строкам листа.</li>
+            </ol>
+        </section>
+
+        <section id="zabbix-howto">
+            <h2>6. Интеграция с Zabbix</h2>
+
+            <h3>6.1. Через Zabbix Agent Builder</h3>
+            <ol>
+                <li>Загрузить Excel с хостами/портами IIB/монолита.</li>
+                <li>Выбрать лист и фильтр (например, только PROD).</li>
+                <li>В блоке Zabbix выбрать:
+                    <ul>
+                        <li>колонку host;</li>
+                        <li>колонку port (если есть);</li>
+                        <li>item key (например, <code>iib.version</code>);</li>
+                        <li>путь скрипта (например, <code>/usr/local/bin/iib_version.sh</code>).</li>
+                    </ul>
+                </li>
+                <li>Нажать “Сформировать Zabbix-скрипт и конфиг”.</li>
+                <li>Скопировать:
+                    <ul>
+                        <li>скрипт;</li>
+                        <li>строку UserParameter;</li>
+                        <li>inventory host;port.</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>6.2. Дальнейшая настройка на хосте</h3>
+            <ol>
+                <li>Положить скрипт в указанный путь, выдать права на исполнение.</li>
+                <li>Добавить UserParameter в конфиг агента и перезапустить его.</li>
+                <li>Создать item в Zabbix на этот ключ, настроить триггеры/LLD.</li>
+            </ol>
+        </section>
+
+        <section id="ext">
+            <h2>7. Возможные расширения и масштабирование</h2>
+
+            <h3>7.1. Без backend</h3>
+            <ul>
+                <li>Сохранение профилей маппинга для разных Excel-шаблонов.</li>
+                <li>Хранение нескольких "конфигураций" инвентаря (prod/test/dev) в одном браузере.</li>
+                <li>Расширение SQL Engine: подзапросы, оконные функции, более сложные JOIN.</li>
+                <li>Сравнение снапшотов во времени (diff версий по дате).</li>
+                <li>Экспорт/импорт полных проектов (инвентарь + шаблоны + настройки).</li>
+            </ul>
+
+            <h3>7.2. С backend’ом</h3>
+            <ul>
+                <li>Общая база для команды.</li>
+                <li>Ролевой доступ (dev/ops/mon/lead).</li>
+                <li>Автоопрос и пуш данных в Zabbix или другую систему.</li>
+            </ul>
+        </section>
+
+        <section id="internals">
+            <h2>8. Внутреннее устройство</h2>
+
+            <h3>8.1. Структура данных в IndexedDB</h3>
+            <p><strong>Object Store: <code>inventory</code></strong></p>
+            <pre>{
+  "environments": [
+    { "id": "prod", "name": "Production", "description": "Основное боевое окружение" }
+  ],
+  "hosts": [
+    { "id": "host01", "name": "iib-node-01", "ip": "10.0.0.1", "envId": "prod" }
+  ],
+  "services": [
+    { "id": "iib-broker", "name": "IIB Broker", "owner": "team-x" }
+  ],
+  "endpoints": [
+    {
+      "id": "iib-prod-v1",
+      "serviceId": "iib-broker",
+      "envId": "prod",
+      "url": "http://iib-node-01:8080/version",
+      "method": "GET"
+    }
+  ],
+  "snapshots": [
+    {
+      "endpointId": "iib-prod-v1",
+      "version": "12.0.1.3",
+      "build": "42",
+      "timestamp": "2025-01-01T12:00:00.000Z"
+    }
+  ]
+}</pre>
+            <p><strong>Object Store: <code>files</code></strong></p>
+            <pre>{
+  "id": "file_123",
+  "name": "inventory.xlsx",
+  "size": 102400,
+  "uploadedAt": "2025-01-01T12:00:00.000Z"
+}</pre>
+            <p><strong>Object Store: <code>sheets</code></strong></p>
+            <pre>{
+  "fileId": "file_123",
+  "sheetName": "Sheet1",
+  "columns": ["HOSTNAME", "IP", "PORT", "ENV"],
+  "rows": [
+    { "HOSTNAME": "host01", "IP": "10.0.0.1", "PORT": "8080", "ENV": "PROD" }
+  ]
+}</pre>
+            <p><strong>Object Store: <code>templates</code></strong></p>
+            <pre>{
+  "id": "template_123",
+  "name": "IIB Version Check",
+  "type": "curl",
+  "category": "monitoring",
+  "content": "curl -s http://{HOSTNAME}:{PORT}/version",
+  "description": "Проверка версии IIB"
+}</pre>
+
+            <h3>8.2. Примеры JSON для экспорта/импорта</h3>
+            <p><strong>Только Endpoint:</strong></p>
+            <pre>[
+  {
+    "id": "svc1-prod",
+    "serviceId": "svc1",
+    "envId": "prod",
+    "url": "http://host01:8080/api/version",
+    "method": "GET"
+  },
+  {
+    "id": "svc1-test",
+    "serviceId": "svc1",
+    "envId": "test",
+    "url": "http://host02:8080/api/version",
+    "method": "GET"
+  }
+]</pre>
+
+            <p><strong>Результаты опроса (VersionSnapshot):</strong></p>
+            <pre>[
+  { "endpointId": "svc1-prod", "version": "1.2.3", "build": "101" },
+  { "endpointId": "svc1-test", "version": "1.2.4-rc1", "build": "99" }
+]</pre>
+        </section>
+
+        <section id="iib">
+            <h2>9. Практические сценарии для IIB / монолита</h2>
+
+            <h3>9.1. Типовой Excel под IIB</h3>
+            <p>Часто таблица для брокера/IIB выглядит так (пример):</p>
+            <ul>
+                <li><code>HOSTNAME</code> — имя хоста;</li>
+                <li><code>IP</code> — адрес (опционально);</li>
+                <li><code>ENV</code> — окружение (PROD/TEST/DEV...);</li>
+                <li><code>IIB_NODE</code> — имя ноды IIB;</li>
+                <li><code>IIB_BROKER</code> или <code>INTEGRATION_NODE</code> — имя брокера;</li>
+                <li><code>PORT</code> — порт HTTP/API/монитора.</li>
+            </ul>
+            <p>Инструмент не требует именно таких имён, но при таких названиях маппинг и Zabbix Builder подберут колонки почти автоматически.</p>
+
+            <h3>9.2. Получить версию IIB/монолита “вручную” через Excel Workspace</h3>
+            <ol>
+                <li>Загрузить Excel с колонками <code>HOSTNAME</code>, <code>PORT</code>, <code>ENV</code>.</li>
+                <li>На вкладке Excel Workspace:
+                    <ul>
+                        <li>выбрать лист;</li>
+                        <li>в фильтре, например, оставить только <code>ENV = PROD</code> (поиск по “prod”).</li>
+                    </ul>
+                </li>
+                <li>Собрать шаблон запроса, например:
+                    <pre>curl -s "http://{HOSTNAME}:{PORT}/version" | jq -r '.version'</pre>
+                </li>
+                <li>Сформировать список команд — получишь готовый набор строк для shell.</li>
+                <li>Результат опроса потом можно собрать в JSON и импортировать в VersionSnapshot.</li>
+            </ol>
+
+            <h3>9.3. Скрипт опроса IIB для Zabbix (каркас)</h3>
+            <p>Через Zabbix Builder генерируется скрипт-заготовка, внутрь которого можно вписать реальный опрос.</p>
+            <p>Пример skeleton для IIB (вписывается вместо <code>echo "IMPLEMENT_ME"</code>):</p>
+            <pre>#!/usr/bin/env bash
+HOST="$1"
+PORT="${2:-4414}"   # порт IIB WebUI / API, подставь свой по умолчанию
+
+# Пример curl-запроса — адаптировать под свой API/health-check:
+OUT=$(curl -s --max-time 5 "http://$HOST:$PORT/api/version" || echo "")
+
+if [ -z "$OUT" ]; then
+  echo "UNKNOWN"
+  exit 1
+fi
+
+# Если API отдаёт JSON с полем version:
+# VERSION=$(echo "$OUT" | jq -r '.version // empty')
+# Если JSON нет — парсинг grep/awk по тексту
+
+# Временно просто отдадим всю строку:
+echo "$OUT"</pre>
+
+            <p>Дальше в Zabbix можно:</p>
+            <ul>
+                <li>завести item типа “Zabbix agent” с ключом <code>iib.version[&lt;host&gt;,&lt;port&gt;]</code>;</li>
+                <li>сделать dependent item’ы, которые уже парсят JSON/текст на версии, build, статус и т.п.</li>
+            </ul>
+
+            <h3>9.4. Импорт версий IIB обратно в инструмент</h3>
+            <p>Если скрипт пишет в лог/файл результат в JSON-формате, можно его собрать и залить в инструмент:</p>
+            <ol>
+                <li>Привязать endpoint’ы к IIB-брокерам:
+                    <ul>
+                        <li>в Endpoint завести id вида <code>iib-&lt;host&gt;-&lt;env&gt;</code>;</li>
+                        <li>url — реальный endpoint версии IIB/монолита (или “виртуальный”, если опрос идёт через ssh + локальную команду);</li>
+                    </ul>
+                </li>
+                <li>Собрать JSON вида:
+                    <pre>[
+  { "endpointId": "iib-host01-prod", "version": "12.0.9.1", "build": "1023" },
+  { "endpointId": "iib-host02-prod", "version": "12.0.8.0", "build": "998" }
+]</pre>
+                </li>
+                <li>Во вкладке VersionSnapshot вставить этот JSON и нажать “Применить”.</li>
+                <li>После этого:
+                    <ul>
+                        <li>VersionSnapshot хранит историю версий;</li>
+                        <li>Version Matrix можно руками выровнять по эталонному окружению;</li>
+                        <li>по данным видно, где версии отстают.</li>
+                    </ul>
+                </li>
+            </ol>
+        </section>
+
+        <section id="roadmap">
+            <h2>10. Roadmap и реализованные версии</h2>
+
+            <h3>10.1. Реализованные версии (v0.4 - v0.8)</h3>
+            <ul>
+                <li><strong>v0.4 — IndexedDB Storage Engine</strong> ✓
+                    <ul>
+                        <li>Хранение больших файлов и листов в IndexedDB;</li>
+                        <li>Миграция данных из localStorage;</li>
+                        <li>Быстрый доступ и восстановление данных после перезапуска.</li>
+                    </ul>
+                </li>
+                <li><strong>v0.5 — Global Search Engine</strong> ✓
+                    <ul>
+                        <li>Инвертированный индекс для всех листов;</li>
+                        <li>Быстрый поиск по файлам, листам, колонкам, строкам;</li>
+                        <li>WebWorker-реализация индексации и поиска;</li>
+                        <li>Интеграция в Excel Workspace.</li>
+                    </ul>
+                </li>
+                <li><strong>v0.6 — Zero-code SQL / BI Engine</strong> ✓
+                    <ul>
+                        <li>SQL-подобный DSL для запросов;</li>
+                        <li>Фильтры, сортировка, группировка, агрегации;</li>
+                        <li>JOIN между листами;</li>
+                        <li>Экспорт результатов в CSV/JSON.</li>
+                    </ul>
+                </li>
+                <li><strong>v0.7 — Template & Zabbix Builder v2</strong> ✓
+                    <ul>
+                        <li>Управление шаблонами команд/скриптов;</li>
+                        <li>Категории и типы шаблонов;</li>
+                        <li>Расширенный Zabbix Builder с пресетами;</li>
+                        <li>Сохранение шаблонов в IndexedDB.</li>
+                    </ul>
+                </li>
+                <li><strong>v0.8 — Dashboard Analytics</strong> ✓
+                    <ul>
+                        <li>Обзорная статистика по инвентарю;</li>
+                        <li>Распределение версий по окружениям и сервисам (графики);</li>
+                        <li>Выявление аномалий (отстающие версии);</li>
+                        <li>История изменений версий.</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <h3>10.2. Планируемые версии (v0.9+)</h3>
+            <ul>
+                <li><strong>Профили маппинга Excel</strong>:
+                    <ul>
+                        <li>сохранение набора соответствий "поле сущности → колонка Excel" с именем профиля;</li>
+                        <li>быстрый выбор профиля при импорте нового файла.</li>
+                    </ul>
+                </li>
+                <li><strong>Расширение SQL Engine</strong>:
+                    <ul>
+                        <li>подзапросы, оконные функции;</li>
+                        <li>более сложные JOIN и агрегации.</li>
+                    </ul>
+                </li>
+                <li><strong>Экспорт "конфигурации проекта"</strong>:
+                    один JSON, включающий:
+                    <ul>
+                        <li>инвентарь;</li>
+                        <li>профили маппинга;</li>
+                        <li>шаблоны строк/скриптов;</li>
+                        <li>настройки Zabbix-Builder'а.</li>
+                    </ul>
+                </li>
+                <li><strong>Сравнение снапшотов во времени</strong>:
+                    <ul>
+                        <li>diff версий по дате;</li>
+                        <li>визуализация изменений.</li>
+                    </ul>
+                </li>
+                <li><strong>CLI-обёртка</strong> (с backend/скриптами):
+                    <ul>
+                        <li>генерить конфиги и скрипты из CI/CD;</li>
+                        <li>синхронизировать изменение версий и мониторинга.</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <p>Текущий фронт уже рассчитан так, чтобы в любой момент можно было "подкрутить" backend:
+                формат данных стабильный, всё крутится вокруг IndexedDB и понятных сущностей.</p>
+        </section>
+    </main>
+</div>
+</body>
+</html>

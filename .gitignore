@@ -33,4 +33,4 @@ dist/
 build/
 *.min.js
 *.min.css
-
+*.rar

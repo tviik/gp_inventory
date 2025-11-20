@@ -3011,7 +3011,7 @@ async function renderDashboard() {
         try {
             const jobs = await listJobs();
             const scanResults = await listScanResults();
-
+            
             // Статистика по опросам
             const successfulScans = scanResults.filter(r => r.status === 'success').length;
             const failedScans = scanResults.filter(r => r.status === 'error' || r.status === 'timeout').length;
