@@ -1,0 +1,313 @@
+body {
+    margin: 0;
+    font-family: Consolas, monospace;
+    background: #1f1f1f;
+    color: #e0e0e0;
+}
+
+#app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background: #2b2b2b;
+    padding: 10px 16px;
+    border-bottom: 1px solid #444;
+}
+
+h1 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+nav button {
+    background: #3a3a3a;
+    border: 1px solid #555;
+    padding: 5px 10px;
+    color: #e0e0e0;
+    cursor: pointer;
+    font-size: 13px;
+    border-radius: 4px;
+}
+
+nav button.active {
+    background: #0077cc;
+    border-color: #0090ff;
+}
+
+/* tabs */
+
+.tab {
+    display: none;
+    padding: 16px;
+}
+
+.tab.active {
+    display: block;
+}
+
+.tab h2 {
+    margin: 0 0 10px 0;
+    border-bottom: 1px solid #444;
+    padding-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 14px;
+    color: #bbbbbb;
+}
+
+.tab h3 {
+    margin-top: 18px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #cccccc;
+}
+
+.hint {
+    font-size: 11px;
+    color: #999999;
+    margin: 4px 0 8px 0;
+}
+
+/* toolbar */
+
+.toolbar {
+    margin: 6px 0 10px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.toolbar button {
+    background: #3a3a3a;
+    border: 1px solid #555;
+    padding: 5px 10px;
+    color: #e0e0e0;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+.toolbar button:hover {
+    background: #4a4a4a;
+}
+
+.toolbar label {
+    font-size: 12px;
+}
+
+/* inputs */
+
+select,
+input[type="text"],
+input[type="file"] {
+    background: #2b2b2b;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    padding: 3px 6px;
+    font-size: 12px;
+}
+
+/* tables */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    table-layout: fixed;
+}
+
+.entity-table th,
+.entity-table td,
+#versionMatrix th,
+#versionMatrix td,
+#excelDataTable th,
+#excelDataTable td,
+#excelImportMappingTable th,
+#excelImportMappingTable td {
+    border: 1px solid #555;
+    padding: 5px 6px;
+    font-size: 12px;
+    vertical-align: top;
+}
+
+.entity-table tr:nth-child(even),
+#excelDataTable tr:nth-child(even) {
+    background: #252525;
+}
+
+.entity-table th,
+#excelDataTable th,
+#versionMatrix th,
+#excelImportMappingTable th {
+    background: #303030;
+    font-weight: 600;
+}
+
+.entity-table td[contenteditable="true"],
+#versionMatrix td[contenteditable="true"] {
+    background: #2b2b2b;
+    outline: none;
+}
+
+.entity-table td[contenteditable="true"]:focus,
+#versionMatrix td[contenteditable="true"]:focus {
+    background: #333366;
+}
+
+/* first column width */
+
+.entity-table th:first-child,
+.entity-table td:first-child,
+#versionMatrix th:first-child,
+#versionMatrix td:first-child {
+    width: 140px;
+}
+
+/* delete button */
+
+.del-row {
+    background: #552222;
+    border: 1px solid #884444;
+    color: #ffdddd;
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 11px;
+    border-radius: 3px;
+}
+
+.del-row:hover {
+    background: #773333;
+}
+
+/* textareas */
+
+textarea {
+    width: 100%;
+    min-height: 140px;
+    background: #222;
+    color: #e0e0e0;
+    padding: 8px;
+    border: 1px solid #444;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+#curlOutput {
+    min-height: 120px;
+    white-space: pre;
+}
+
+/* matrix */
+
+.matrix-wrapper {
+    overflow: auto;
+    max-width: 100%;
+    border: 1px solid #444;
+    background: #202020;
+}
+
+#versionMatrix {
+    min-width: 400px;
+}
+
+#versionMatrix td[contenteditable="true"] {
+    background: #262626;
+}
+
+#versionMatrix td.baseline {
+    background: #303050;
+}
+
+#versionMatrix td.diff {
+    background: #663333;
+}
+
+#versionMatrix th:first-child,
+#versionMatrix td:first-child {
+    position: sticky;
+    left: 0;
+    background: #252525;
+    z-index: 1;
+}
+
+/* Excel workspace */
+
+.excel-columns-panel {
+    display: grid;
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.excel-columns-block,
+.excel-builder-block {
+    border: 1px solid #444;
+    padding: 8px;
+    background: #262626;
+}
+
+#excelColumnsList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    font-size: 12px;
+}
+
+#excelColumnsList li {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 0;
+}
+
+#excelColumnsList label {
+    cursor: pointer;
+}
+
+.excel-table-wrapper {
+    max-height: 320px;
+    overflow: auto;
+    border: 1px solid #444;
+    background: #202020;
+}
+
+/* Excel import mapping */
+
+.excel-import-mapping-wrapper {
+    max-height: 220px;
+    overflow: auto;
+    border: 1px solid #444;
+    background: #202020;
+}
+
+/* responsive */
+
+@media (max-width: 900px) {
+    .excel-columns-panel {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 800px) {
+    header {
+        padding: 8px;
+    }
+    .tab {
+        padding: 10px;
+    }
+}

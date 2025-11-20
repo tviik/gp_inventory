@@ -1,0 +1,36 @@
+# Git ignore для Version Inventory / Local Data Workbench
+
+# Внутренние файлы разработки (бэклоги)
+cursor/
+docs/
+developer_docs.html
+
+# Старые/неиспользуемые файлы
+mlt.js
+mlt.css
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Логи и временные файлы
+*.log
+*.tmp
+*.temp
+
+# Node modules (если будут добавлены в будущем)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build артефакты (если будут)
+dist/
+build/
+*.min.js
+*.min.css
+

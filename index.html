@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Version Inventory — Excel + Zabbix</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <h1>Version Inventory — Excel + Zabbix (Frontend Only)</h1>
+            <nav>
+                <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+                <button class="tab-btn" data-tab="env">Environment</button>
+                <button class="tab-btn" data-tab="host">Host</button>
+                <button class="tab-btn" data-tab="service">Service</button>
+                <button class="tab-btn" data-tab="endpoint">Endpoint</button>
+                <button class="tab-btn" data-tab="snapshot">VersionSnapshot</button>
+                <button class="tab-btn" data-tab="matrix">Version Matrix</button>
+                <button class="tab-btn" data-tab="excel">Excel Workspace</button>
+                <button class="tab-btn" data-tab="sql">SQL / BI Engine</button>
+                <button class="tab-btn" data-tab="templates">Templates</button>
+                <button class="tab-btn" data-tab="importExport">Import / Export</button>
+            </nav>
+        </header>
+
+        <!-- ===== DASHBOARD ===== -->
+        <section class="tab" id="dashboard">
+            <h2>Dashboard & Analytics</h2>
+
+            <div class="dashboard-overview">
+                <h3>Overview</h3>
+                <div class="dashboard-cards" id="dashboardCards">
+                    <!-- Cards будут добавлены динамически -->
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <h3>Version Distribution by Environment</h3>
+                <canvas id="versionByEnvChart" width="800" height="400"></canvas>
+            </div>
+
+            <div class="dashboard-section">
+                <h3>Version Distribution by Service</h3>
+                <canvas id="versionByServiceChart" width="800" height="400"></canvas>
+            </div>
+
+            <div class="dashboard-section">
+                <h3>Anomalies & Alerts</h3>
+                <div id="dashboardAnomalies">
+                    <!-- Аномалии будут добавлены динамически -->
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <h3>Version History</h3>
+                <div id="dashboardHistory">
+                    <!-- История будет добавлена динамически -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== ENVIRONMENT ===== -->
+        <section class="tab" id="env">
+            <h2>Environment</h2>
+            <div class="toolbar">
+                <button class="add-row" data-entity="environments">Добавить окружение</button>
+            </div>
+            <table class="entity-table" data-entity="environments"></table>
+        </section>
+
+        <!-- ===== HOST ===== -->
+        <section class="tab" id="host">
+            <h2>Host</h2>
+            <div class="toolbar">
+                <button class="add-row" data-entity="hosts">Добавить хост</button>
+            </div>
+            <table class="entity-table" data-entity="hosts"></table>
+        </section>
+
+        <!-- ===== SERVICE ===== -->
+        <section class="tab" id="service">
+            <h2>Service</h2>
+            <div class="toolbar">
+                <button class="add-row" data-entity="services">Добавить сервис</button>
+            </div>
+            <table class="entity-table" data-entity="services"></table>
+        </section>
+
+        <!-- ===== ENDPOINT ===== -->
+        <section class="tab" id="endpoint">
+            <h2>Endpoint</h2>
+            <div class="toolbar">
+                <button class="add-row" data-entity="endpoints">Добавить endpoint</button>
+            </div>
+            <table class="entity-table" data-entity="endpoints"></table>
+
+            <h3>Автогенерация curl / HTTP-запросов</h3>
+            <div class="toolbar">
+                <button id="genCurl">Сформировать curl-команды</button>
+            </div>
+            <textarea id="curlOutput" readonly
+                placeholder="Здесь появятся команды curl для всех endpoint'ов"></textarea>
+        </section>
+
+        <!-- ===== VERSION SNAPSHOT ===== -->
+        <section class="tab" id="snapshot">
+            <h2>Version Snapshot</h2>
+            <div class="toolbar">
+                <button class="add-row" data-entity="snapshots">Добавить снапшот вручную</button>
+            </div>
+            <table class="entity-table" data-entity="snapshots"></table>
+
+            <h3>Импорт результата опроса (JSON)</h3>
+            <p class="hint">
+                Поддерживается один объект или массив объектов, вид:<br>
+                { "endpointId": "svc1-prod", "version": "1.0.0", "build": "42" }
+            </p>
+            <textarea id="snapshotJson" placeholder="Вставьте JSON с результатами опроса"></textarea>
+            <div class="toolbar">
+                <button id="applySnapshotJson">Применить</button>
+            </div>
+        </section>
+
+        <!-- ===== VERSION MATRIX ===== -->
+        <section class="tab" id="matrix">
+            <h2>Матрица версий (Service × Environment)</h2>
+            <div class="toolbar">
+                <label>Эталонное окружение:
+                    <select id="matrixBaseline"></select>
+                </label>
+            </div>
+            <div class="matrix-wrapper">
+                <table id="versionMatrix"></table>
+            </div>
+            <p class="hint">
+                Ячейки, отличающиеся от эталонного окружения, подсвечены. Данные матрицы хранятся отдельно в
+                localStorage
+                и не завязаны на снапшоты.
+            </p>
+        </section>
+
+        <!-- ===== EXCEL WORKSPACE ===== -->
+        <section class="tab" id="excel">
+            <h2>Excel Workspace (универсальный)</h2>
+
+            <!-- Загрузка -->
+            <h3>Загрузка Excel</h3>
+            <div class="toolbar">
+                <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" multiple>
+                <label>Лист:
+                    <select id="excelSheetSelect"></select>
+                </label>
+            </div>
+            <p class="hint">
+                Можно загружать несколько Excel/CSV файлов одновременно. Структура не жёсткая.
+            </p>
+            <div id="excelFileList"></div>
+
+            <!-- Поиск и фильтрация -->
+            <h3>Поиск и фильтрация</h3>
+            <div class="toolbar">
+                <label>Быстрый поиск по текущему листу:
+                    <input type="text" id="excelFilterInput" placeholder="поиск по всем колонкам">
+                </label>
+                <label>Глобальный поиск по всем файлам:
+                    <input type="text" id="excelGlobalSearchInput" placeholder="поиск по всем файлам и листам">
+                    <button id="excelGlobalSearchBtn" class="btn-small">Найти</button>
+                </label>
+            </div>
+            <div id="excelGlobalSearchResults" class="search-results-compact"></div>
+
+            <div class="excel-columns-panel">
+                <div class="excel-columns-block">
+                    <h3>Колонки листа</h3>
+                    <p class="hint">Отмеченные колонки будут использоваться в билдере строк.</p>
+                    <ul id="excelColumnsList"></ul>
+                </div>
+
+                <div class="excel-builder-block">
+                    <h3>Билдер строк (шаблон)</h3>
+                    <p class="hint">
+                        Используйте плейсхолдеры вида <code>{ColumnName}</code>.<br>
+                        Например: <code>ssh {host} -p {port}</code> или
+                        <code>curl http://{ip}:{port}/version</code>.
+                    </p>
+                    <textarea id="excelTemplateInput"
+                        placeholder="Шаблон одной строки, используйте {ColumnName} для подстановки значений из Excel"></textarea>
+                    <div class="toolbar">
+                        <button id="excelInsertSelectedColumnsBtn">Вставить выбранные колонки в шаблон</button>
+                        <button id="excelApplyTemplateBtn">Сформировать строки по всем строкам</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Импорт в инвентарь -->
+            <h3>Импорт в инвентарь (из Excel)</h3>
+            <div class="toolbar">
+                <label>Целевая сущность:
+                    <select id="excelImportEntity">
+                        <option value="hosts">Host</option>
+                        <option value="services">Service</option>
+                        <option value="endpoints">Endpoint</option>
+                        <option value="snapshots">Snapshot</option>
+                        <option value="environments">Environment</option>
+                    </select>
+                </label>
+            </div>
+            <p class="hint">
+                Маппинг: какие поля сущности брать из каких колонок Excel. Импортируются строки текущего листа с учётом
+                фильтра.
+                Поля пытаются автоматически сопоставляться по названию (host/ip/port/env/service и т.п.).
+            </p>
+            <div class="excel-import-mapping-wrapper">
+                <table id="excelImportMappingTable"></table>
+            </div>
+            <div class="toolbar">
+                <button id="excelImportApplyBtn">Импортировать в выбранную сущность</button>
+            </div>
+
+            <!-- Превью данных листа -->
+            <h3>Превью данных листа</h3>
+            <div class="excel-table-wrapper">
+                <table id="excelDataTable"></table>
+            </div>
+
+            <!-- Результат строкобилдера -->
+            <h3>Результат (скрипты / команды)</h3>
+            <textarea id="excelOutputArea" readonly
+                placeholder="Здесь будут сформированные строки по шаблону для всех строк Excel"></textarea>
+
+            <!-- Zabbix Builder -->
+            <h3>Zabbix Agent Builder</h3>
+            <p class="hint">
+                Использует текущий лист Excel. По выбранным колонкам строит:<br>
+                1) заготовку скрипта для zabbix-агента,<br>
+                2) строку UserParameter для zabbix_agentd.conf,<br>
+                3) inventory-файл (host;port) по текущему листу и фильтру.
+            </p>
+            <div class="toolbar">
+                <label>Колонка host:
+                    <select id="zbxHostCol"></select>
+                </label>
+                <label>Колонка port (опц.):
+                    <select id="zbxPortCol"></select>
+                </label>
+                <label>Имя ключа (item key):
+                    <input type="text" id="zbxItemKey" value="iib.version">
+                </label>
+                <label>Путь скрипта:
+                    <input type="text" id="zbxScriptPath" value="/usr/local/bin/iib_version.sh">
+                </label>
+            </div>
+            <div class="toolbar">
+                <button id="zbxBuildBtn">Сформировать Zabbix-скрипт и конфиг</button>
+            </div>
+
+            <h3>Скрипт для zabbix-агента</h3>
+            <textarea id="zbxScriptArea" readonly></textarea>
+
+            <h3>UserParameter для zabbix_agentd.conf</h3>
+            <textarea id="zbxUserParamArea" readonly></textarea>
+
+            <h3>Inventory host;port (по Excel)</h3>
+            <textarea id="zbxInventoryArea" readonly></textarea>
+        </section>
+
+        <!-- ===== GLOBAL SEARCH ===== -->
+        <!-- ===== SQL / BI ENGINE ===== -->
+        <section class="tab" id="sql">
+            <h2>SQL / BI Engine</h2>
+
+            <div class="sql-controls">
+                <div class="sql-query-panel">
+                    <h3>SQL Запрос</h3>
+                    <div class="sql-source-selector">
+                        <label>Источник данных (лист):
+                            <select id="sqlSourceSheet">
+                                <option value="">Выберите лист...</option>
+                            </select>
+                        </label>
+                        <label>JOIN с листом (опционально):
+                            <select id="sqlJoinSheet">
+                                <option value="">Нет</option>
+                            </select>
+                        </label>
+                    </div>
+                    <textarea id="sqlQueryInput" class="sql-query-input"
+                        placeholder='SELECT host, ip, env WHERE env = "prod" ORDER BY host'></textarea>
+                    <div class="sql-query-buttons">
+                        <button id="sqlExecuteBtn" class="btn-primary">Выполнить</button>
+                        <button id="sqlClearBtn" class="btn-secondary">Очистить</button>
+                        <button id="sqlExamplesBtn" class="btn-secondary">Примеры</button>
+                    </div>
+                </div>
+
+                <div class="sql-results-panel">
+                    <h3>Результаты</h3>
+                    <div id="sqlResultsInfo" class="sql-results-info"></div>
+                    <div id="sqlResultsTable" class="sql-results-table-wrapper"></div>
+                    <div class="sql-export-buttons">
+                        <button id="sqlExportCsvBtn" class="btn-small">Экспорт CSV</button>
+                        <button id="sqlExportJsonBtn" class="btn-small">Экспорт JSON</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== TEMPLATES ===== -->
+        <section class="tab" id="templates">
+            <h2>Templates & Script Builder</h2>
+
+            <div class="templates-panel">
+                <div class="templates-list-panel">
+                    <h3>Сохраненные шаблоны</h3>
+                    <div class="toolbar">
+                        <button id="templateNewBtn" class="btn-primary">Создать шаблон</button>
+                        <select id="templateFilterType">
+                            <option value="">Все типы</option>
+                            <option value="ssh">SSH</option>
+                            <option value="curl">CURL</option>
+                            <option value="sql">SQL</option>
+                            <option value="ansible">Ansible</option>
+                            <option value="zabbix">Zabbix</option>
+                            <option value="bash">Bash</option>
+                            <option value="powershell">PowerShell</option>
+                            <option value="generic">Generic</option>
+                        </select>
+                    </div>
+                    <div id="templatesList" class="templates-list"></div>
+                </div>
+
+                <div class="template-editor-panel">
+                    <h3>Редактор шаблона</h3>
+                    <div class="template-form">
+                        <label>Название:
+                            <input type="text" id="templateNameInput" placeholder="Название шаблона">
+                        </label>
+                        <label>Тип:
+                            <select id="templateTypeSelect">
+                                <option value="generic">Generic</option>
+                                <option value="ssh">SSH</option>
+                                <option value="curl">CURL</option>
+                                <option value="sql">SQL</option>
+                                <option value="ansible">Ansible</option>
+                                <option value="zabbix">Zabbix</option>
+                                <option value="bash">Bash</option>
+                                <option value="powershell">PowerShell</option>
+                            </select>
+                        </label>
+                        <label>Категория:
+                            <select id="templateCategorySelect">
+                                <option value="commands">Commands</option>
+                                <option value="scripts">Scripts</option>
+                                <option value="configs">Configs</option>
+                            </select>
+                        </label>
+                        <label>Описание:
+                            <input type="text" id="templateDescriptionInput" placeholder="Описание шаблона">
+                        </label>
+                        <label>Шаблон:
+                            <textarea id="templateContentInput" class="template-content-input"
+                                placeholder='Используйте {ColumnName} для подстановки значений'></textarea>
+                        </label>
+                        <div class="toolbar">
+                            <button id="templateSaveBtn" class="btn-primary">Сохранить</button>
+                            <button id="templateDeleteBtn" class="btn-danger">Удалить</button>
+                            <button id="templateTestBtn" class="btn-secondary">Тест</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== IMPORT / EXPORT ===== -->
+        <section class="tab" id="importExport">
+            <h2>Экспорт / Импорт</h2>
+
+            <h3>Экспорт JSON</h3>
+            <div class="toolbar">
+                <label>Сущность:
+                    <select id="exportJsonSelect"></select>
+                </label>
+                <button id="exportJsonBtn">Экспорт JSON</button>
+            </div>
+            <textarea id="exportJsonArea" readonly placeholder="Здесь будет JSON выбранной сущности"></textarea>
+
+            <h3>Экспорт CSV</h3>
+            <div class="toolbar">
+                <label>Сущность:
+                    <select id="exportCsvSelect"></select>
+                </label>
+                <button id="exportCsvBtn">Экспорт CSV</button>
+            </div>
+            <textarea id="exportCsvArea" readonly placeholder="Здесь будет CSV выбранной сущности"></textarea>
+
+            <h3>Импорт JSON (полная замена всей базы)</h3>
+            <p class="hint">
+                Ожидается объект вида:<br>
+                { "environments": [...], "hosts": [...], "services": [...], "endpoints": [...], "snapshots": [...] }
+            </p>
+            <textarea id="importJsonArea" placeholder="Вставьте полный JSON дамп базы"></textarea>
+            <div class="toolbar">
+                <button id="importJsonBtn">Импорт с полной заменой</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Excel парсер (чистый JS, без сервера) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>
