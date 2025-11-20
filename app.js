@@ -313,7 +313,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     };
 });
 
-// активируем первую вкладку
+// активируем первую вкладку 
 document.querySelector(".tab-btn").click();
 
 /* ============================
