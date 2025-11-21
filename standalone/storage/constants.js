@@ -4,7 +4,7 @@
 
 // Database configuration
 export const DB_NAME = 'versionInventoryDB';
-export const DB_VERSION = 4; // Increment for Scan/Jobs/Logs support
+export const DB_VERSION = 5; // Increment for Mapping Profiles support
 
 // Store names
 export const STORES = {
@@ -15,7 +15,8 @@ export const STORES = {
     TEMPLATES: 'templates',
     DATASETS: 'datasets', // Added for Block B
     JOBS: 'jobs', // Added for v0.9
-    SCAN_RESULTS: 'scanResults' // Added for v0.9
+    SCAN_RESULTS: 'scanResults', // Added for v0.9
+    MAPPING_PROFILES: 'mappingProfiles' // Added for v0.10
 };
 
 // Entity types (for inventory store)

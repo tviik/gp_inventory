@@ -16,6 +16,7 @@ export const JOB_SCHEMA = {
     type: { required: true, type: 'string', enum: ['endpoints', 'hosts'] },
     targetIds: { required: true, type: 'array', minLength: 1 },
     templateId: { required: false, type: 'string' },
+    credentialId: { required: false, type: 'string' }, // Added for v0.11
     schedule: { required: false, type: 'object' },
     createdAt: { required: true, type: 'string' },
     updatedAt: { required: true, type: 'string' },
@@ -33,6 +34,7 @@ export function createDefaultJob() {
         type: 'endpoints',
         targetIds: [],
         templateId: null,
+        credentialId: null, // Added for v0.11
         schedule: null,
         status: 'active',
         createdAt: new Date().toISOString(),

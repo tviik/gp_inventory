@@ -42,7 +42,18 @@ import {
     getScanResultsByEndpoint,
     listScanResults,
     deleteScanResult,
-    deleteScanResultsByJob
+    deleteScanResultsByJob,
+    saveMappingProfile,
+    getMappingProfile,
+    listMappingProfiles,
+    getMappingProfilesByEntity,
+    deleteMappingProfile,
+    saveCredential,
+    getCredential,
+    listCredentials,
+    getCredentialsByType,
+    getCredentialsByAuthType,
+    deleteCredential
 } from './storage/indexeddb.js';
 import { migrateFromLocalStorage, hasDataToMigrate } from './storage/migration.js';
 import {
@@ -88,6 +99,32 @@ import {
     createScanResult,
     extractVersionFromResponse
 } from './scan/result-model.js';
+import {
+    createProfile,
+    updateProfile,
+    validateProfile,
+    createDefaultProfile,
+    incrementUsageCount,
+    ENTITY_SCHEMAS
+} from './mapping/profile-model.js';
+import {
+    createCredential,
+    updateCredential,
+    validateCredential,
+    createDefaultCredential,
+    decryptCredential,
+    incrementUsageCount as incrementCredentialUsageCount
+} from './credentials/credential-model.js';
+import {
+    exportConfiguration,
+    generateExportFileName
+} from './export/export-engine.js';
+import {
+    validateImportFile,
+    parseImportFile,
+    previewImport,
+    importConfiguration
+} from './import/import-engine.js';
 
 /* ============================
    SCHEMAS & DEFAULT DATA
@@ -349,6 +386,12 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
         }
         if (id === "scan") {
             initScanUI();
+        }
+        if (id === "credentials") {
+            initCredentialsUI();
+        }
+        if (id === "importExport") {
+            initExportImportUI();
         }
         if (id === "dashboard") {
             // Отложенный вызов, чтобы IndexedDB успел инициализироваться
@@ -792,6 +835,46 @@ const excelInsertSelectedColumnsBtn = document.getElementById("excelInsertSelect
 const excelImportEntitySelect = document.getElementById("excelImportEntity");
 const excelImportMappingTable = document.getElementById("excelImportMappingTable");
 const excelImportApplyBtn = document.getElementById("excelImportApplyBtn");
+
+// Mapping profiles
+const mappingProfileSelect = document.getElementById("mappingProfileSelect");
+const mappingProfileApplyBtn = document.getElementById("mappingProfileApplyBtn");
+const mappingProfileSaveBtn = document.getElementById("mappingProfileSaveBtn");
+const mappingProfilesManageBtn = document.getElementById("mappingProfilesManageBtn");
+const mappingProfilesPanel = document.getElementById("mappingProfilesPanel");
+const mappingProfilesList = document.getElementById("mappingProfilesList");
+const mappingProfilesEntityFilter = document.getElementById("mappingProfilesEntityFilter");
+const mappingProfileNameInput = document.getElementById("mappingProfileNameInput");
+const mappingProfileDescriptionInput = document.getElementById("mappingProfileDescriptionInput");
+const mappingProfileEntitySelect = document.getElementById("mappingProfileEntitySelect");
+const mappingProfileSaveEditorBtn = document.getElementById("mappingProfileSaveEditorBtn");
+const mappingProfileDeleteEditorBtn = document.getElementById("mappingProfileDeleteEditorBtn");
+const mappingProfileCancelBtn = document.getElementById("mappingProfileCancelBtn");
+
+let currentMappingProfileId = null;
+
+// Credentials
+const credentialNewBtn = document.getElementById("credentialNewBtn");
+const credentialFilterType = document.getElementById("credentialFilterType");
+const credentialFilterAuthType = document.getElementById("credentialFilterAuthType");
+const credentialsList = document.getElementById("credentialsList");
+const credentialNameInput = document.getElementById("credentialNameInput");
+const credentialTypeSelect = document.getElementById("credentialTypeSelect");
+const credentialAuthTypeSelect = document.getElementById("credentialAuthTypeSelect");
+const credentialUsernameInput = document.getElementById("credentialUsernameInput");
+const credentialPasswordSection = document.getElementById("credentialPasswordSection");
+const credentialPasswordInput = document.getElementById("credentialPasswordInput");
+const credentialTogglePasswordBtn = document.getElementById("credentialTogglePasswordBtn");
+const credentialSshSection = document.getElementById("credentialSshSection");
+const credentialSshKeyInput = document.getElementById("credentialSshKeyInput");
+const credentialSshPassphraseInput = document.getElementById("credentialSshPassphraseInput");
+const credentialToggleSshPassphraseBtn = document.getElementById("credentialToggleSshPassphraseBtn");
+const credentialDescriptionInput = document.getElementById("credentialDescriptionInput");
+const credentialSaveBtn = document.getElementById("credentialSaveBtn");
+const credentialDeleteBtn = document.getElementById("credentialDeleteBtn");
+const credentialCopyBtn = document.getElementById("credentialCopyBtn");
+
+let currentCredentialId = null;
 
 // Zabbix builder
 const zbxHostColSelect = document.getElementById("zbxHostCol");
@@ -1620,9 +1703,24 @@ async function renderExcelImportMapping() {
     const entity = excelImportEntitySelect.value;
     const fields = schemas[entity];
 
+    // Загружаем профиль, если выбран
+    let profileMapping = {};
+    if (mappingProfileSelect && mappingProfileSelect.value) {
+        try {
+            const profile = await getMappingProfile(mappingProfileSelect.value);
+            if (profile && profile.entity === entity) {
+                profileMapping = profile.mapping || {};
+            }
+        } catch (error) {
+            console.error('[Excel] Error loading profile:', error);
+        }
+    }
+
     let html = "<tr><th>Поле сущности</th><th>Колонка Excel/Dataset</th></tr>";
     fields.forEach(field => {
-        const guessed = guessColumnForField(field, columns);
+        // Используем значение из профиля, если есть, иначе угадываем
+        const profileValue = profileMapping[field];
+        const guessed = profileValue || guessColumnForField(field, columns);
         html += `<tr>
             <td>${field}</td>
             <td>
@@ -1637,6 +1735,9 @@ async function renderExcelImportMapping() {
     });
 
     excelImportMappingTable.innerHTML = html;
+
+    // Обновляем список профилей
+    await updateMappingProfileSelect();
 }
 
 async function applyExcelImportToInventory() {
@@ -3396,6 +3497,7 @@ function initScanUI() {
     const jobDescriptionInput = document.getElementById("scanJobDescriptionInput");
     const jobTypeSelect = document.getElementById("scanJobTypeSelect");
     const jobTemplateSelect = document.getElementById("scanJobTemplateSelect");
+    const jobCredentialSelect = document.getElementById("scanJobCredentialSelect");
     const jobStatusSelect = document.getElementById("scanJobStatusSelect");
     const jobsList = document.getElementById("scanJobsList");
     const targetsPanel = document.getElementById("scanJobTargetsPanel");
@@ -3477,9 +3579,11 @@ function initScanUI() {
             if (jobTypeSelect) jobTypeSelect.value = job.type || 'endpoints';
             if (jobStatusSelect) jobStatusSelect.value = job.status || 'active';
             if (jobTemplateSelect) jobTemplateSelect.value = job.templateId || '';
+            if (jobCredentialSelect) jobCredentialSelect.value = job.credentialId || '';
 
-            // Загружаем списки шаблонов и целей
+            // Загружаем списки шаблонов, креденшалов и целей
             await populateJobTemplates();
+            await populateJobCredentials(job.credentialId || null);
             await populateJobTargets(job.type, job.targetIds);
 
             // Обновляем список
@@ -3522,6 +3626,43 @@ function initScanUI() {
             });
         } catch (error) {
             console.error('[Scan] Error loading templates:', error);
+        }
+    }
+
+    // Заполнение списка креденшалов (v0.11)
+    async function populateJobCredentials(selectedCredentialId = null) {
+        if (!jobCredentialSelect) return;
+
+        try {
+            // Ждем инициализации IndexedDB
+            if (!indexedDBReady && !isAvailable()) {
+                let attempts = 0;
+                while (attempts < 10 && !indexedDBReady && !isAvailable()) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+            }
+
+            const credentials = await listCredentials();
+            jobCredentialSelect.innerHTML = '<option value="">Нет (без аутентификации)</option>';
+
+            if (credentials.length === 0) {
+                return;
+            }
+
+            credentials.forEach(credential => {
+                const option = document.createElement('option');
+                option.value = credential.id;
+                const typeLabel = credential.type === 'technical' ? 'Техн.' : 'Польз.';
+                const authLabel = credential.authType === 'password' ? 'Password' : 'SSH';
+                option.textContent = `${credential.name} (${typeLabel}, ${authLabel}, ${credential.username})`;
+                if (selectedCredentialId === credential.id) {
+                    option.selected = true;
+                }
+                jobCredentialSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('[Scan] Error loading credentials:', error);
         }
     }
 
@@ -3574,7 +3715,9 @@ function initScanUI() {
         if (jobTypeSelect) jobTypeSelect.value = 'endpoints';
         if (jobStatusSelect) jobStatusSelect.value = 'active';
         if (jobTemplateSelect) jobTemplateSelect.value = '';
+        if (jobCredentialSelect) jobCredentialSelect.value = '';
         await populateJobTemplates();
+        await populateJobCredentials();
         await populateJobTargets('endpoints', []);
         loadJobs();
     }
@@ -3607,6 +3750,7 @@ function initScanUI() {
                 type: jobTypeSelect ? jobTypeSelect.value : 'endpoints',
                 targetIds: selectedTargets,
                 templateId: jobTemplateSelect && jobTemplateSelect.value ? jobTemplateSelect.value : null,
+                credentialId: jobCredentialSelect && jobCredentialSelect.value ? jobCredentialSelect.value : null,
                 status: jobStatusSelect ? jobStatusSelect.value : 'active'
             };
 
@@ -3962,4 +4106,1008 @@ function initScanUI() {
     populateJobTargets('endpoints', []);
     loadScanResults();
     populateResultsFilters();
+}
+
+/* ============================
+   MAPPING PROFILES UI (v0.10)
+============================ */
+
+// Обновление списка профилей в select
+async function updateMappingProfileSelect() {
+    if (!mappingProfileSelect) return;
+
+    try {
+        const entity = excelImportEntitySelect ? excelImportEntitySelect.value : '';
+        const profiles = entity
+            ? await getMappingProfilesByEntity(entity)
+            : await listMappingProfiles();
+
+        mappingProfileSelect.innerHTML = '<option value="">Нет (автоопределение)</option>';
+        profiles.forEach(profile => {
+            const option = document.createElement('option');
+            option.value = profile.id;
+            option.textContent = profile.name;
+            mappingProfileSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('[MappingProfiles] Error loading profiles:', error);
+    }
+}
+
+// Применение выбранного профиля
+async function applyMappingProfile() {
+    if (!mappingProfileSelect || !mappingProfileSelect.value) {
+        alert("Выберите профиль для применения");
+        return;
+    }
+
+    try {
+        const profile = await getMappingProfile(mappingProfileSelect.value);
+        if (!profile) {
+            alert("Профиль не найден");
+            return;
+        }
+
+        // Устанавливаем сущность, если она отличается
+        if (excelImportEntitySelect && excelImportEntitySelect.value !== profile.entity) {
+            excelImportEntitySelect.value = profile.entity;
+        }
+
+        // Обновляем маппинг
+        await renderExcelImportMapping();
+
+        // Увеличиваем счетчик использования
+        const updatedProfile = incrementUsageCount(profile);
+        await saveMappingProfile(updatedProfile);
+
+        alert(`Профиль "${profile.name}" применен`);
+    } catch (error) {
+        console.error('[MappingProfiles] Error applying profile:', error);
+        alert(`Ошибка применения профиля: ${error.message}`);
+    }
+}
+
+// Сохранение текущего маппинга как профиля
+async function saveCurrentMappingAsProfile() {
+    if (!excelImportMappingTable) {
+        alert("Сначала настройте маппинг");
+        return;
+    }
+
+    const entity = excelImportEntitySelect ? excelImportEntitySelect.value : '';
+    if (!entity) {
+        alert("Выберите целевую сущность");
+        return;
+    }
+
+    // Собираем маппинг из таблицы
+    const mapping = {};
+    excelImportMappingTable.querySelectorAll("select[data-field]").forEach(sel => {
+        const field = sel.dataset.field;
+        const column = sel.value;
+        if (column) {
+            mapping[field] = column;
+        }
+    });
+
+    if (Object.keys(mapping).length === 0) {
+        alert("Настройте маппинг перед сохранением");
+        return;
+    }
+
+    // Запрашиваем название профиля
+    const profileName = prompt("Введите название профиля:");
+    if (!profileName || !profileName.trim()) {
+        return;
+    }
+
+    try {
+        const profileData = {
+            name: profileName.trim(),
+            description: '',
+            entity: entity,
+            mapping: mapping
+        };
+
+        const profile = createProfile(profileData);
+        const profileId = await saveMappingProfile(profile);
+
+        alert(`Профиль "${profileName}" сохранен`);
+
+        // Обновляем UI
+        await updateMappingProfileSelect();
+        if (mappingProfileSelect) {
+            mappingProfileSelect.value = profileId;
+        }
+        await loadMappingProfiles();
+    } catch (error) {
+        console.error('[MappingProfiles] Error saving profile:', error);
+        alert(`Ошибка сохранения профиля: ${error.message}`);
+    }
+}
+
+// Загрузка списка профилей
+async function loadMappingProfiles() {
+    if (!mappingProfilesList) return;
+
+    try {
+        const entityFilter = mappingProfilesEntityFilter ? mappingProfilesEntityFilter.value : '';
+        const profiles = entityFilter
+            ? await getMappingProfilesByEntity(entityFilter)
+            : await listMappingProfiles();
+
+        profiles.sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+        if (profiles.length === 0) {
+            mappingProfilesList.innerHTML = "<p class='no-results'>Нет сохраненных профилей</p>";
+            return;
+        }
+
+        let html = "";
+        profiles.forEach(profile => {
+            html += `<div class="mapping-profile-item ${currentMappingProfileId === profile.id ? 'active' : ''}" 
+                         data-profile-id="${profile.id}">
+                <div class="mapping-profile-item-name">${escapeHtml(profile.name)}</div>
+                <div class="mapping-profile-item-meta">
+                    <span>${profile.entity}</span>
+                    <span>${Object.keys(profile.mapping || {}).length} полей</span>
+                    ${profile.usageCount ? `<span>Использован ${profile.usageCount} раз</span>` : ''}
+                </div>
+            </div>`;
+        });
+
+        mappingProfilesList.innerHTML = html;
+
+        // Обработчики кликов
+        mappingProfilesList.querySelectorAll('.mapping-profile-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const profileId = item.dataset.profileId;
+                loadMappingProfileForEdit(profileId);
+            });
+        });
+    } catch (error) {
+        console.error('[MappingProfiles] Error loading profiles:', error);
+        mappingProfilesList.innerHTML = "<p class='no-results'>Ошибка загрузки профилей</p>";
+    }
+}
+
+// Загрузка профиля для редактирования
+async function loadMappingProfileForEdit(profileId) {
+    try {
+        const profile = await getMappingProfile(profileId);
+        if (!profile) {
+            alert("Профиль не найден");
+            return;
+        }
+
+        currentMappingProfileId = profileId;
+        if (mappingProfileNameInput) mappingProfileNameInput.value = profile.name || '';
+        if (mappingProfileDescriptionInput) mappingProfileDescriptionInput.value = profile.description || '';
+        if (mappingProfileEntitySelect) mappingProfileEntitySelect.value = profile.entity || 'hosts';
+
+        // Обновляем список
+        await loadMappingProfiles();
+    } catch (error) {
+        console.error('[MappingProfiles] Error loading profile:', error);
+        alert("Ошибка загрузки профиля");
+    }
+}
+
+// Сохранение профиля из редактора
+async function saveMappingProfileFromEditor() {
+    if (!mappingProfileNameInput || !mappingProfileNameInput.value.trim()) {
+        alert("Введите название профиля");
+        return;
+    }
+
+    const entity = mappingProfileEntitySelect ? mappingProfileEntitySelect.value : '';
+    if (!entity) {
+        alert("Выберите сущность");
+        return;
+    }
+
+    // Собираем маппинг из текущей таблицы маппинга, если она есть
+    let mapping = {};
+    if (excelImportMappingTable && excelImportEntitySelect && excelImportEntitySelect.value === entity) {
+        excelImportMappingTable.querySelectorAll("select[data-field]").forEach(sel => {
+            const field = sel.dataset.field;
+            const column = sel.value;
+            if (column) {
+                mapping[field] = column;
+            }
+        });
+    }
+
+    // Если маппинг пустой, используем из текущего профиля
+    if (Object.keys(mapping).length === 0 && currentMappingProfileId) {
+        try {
+            const existingProfile = await getMappingProfile(currentMappingProfileId);
+            if (existingProfile) {
+                mapping = existingProfile.mapping || {};
+            }
+        } catch (error) {
+            console.error('[MappingProfiles] Error loading existing profile:', error);
+        }
+    }
+
+    if (Object.keys(mapping).length === 0) {
+        alert("Настройте маппинг перед сохранением");
+        return;
+    }
+
+    try {
+        const profileData = {
+            name: mappingProfileNameInput.value.trim(),
+            description: mappingProfileDescriptionInput.value.trim() || '',
+            entity: entity,
+            mapping: mapping
+        };
+
+        let profile;
+        if (currentMappingProfileId) {
+            const existingProfile = await getMappingProfile(currentMappingProfileId);
+            if (!existingProfile) {
+                alert("Профиль не найден");
+                return;
+            }
+            profile = updateProfile(existingProfile, profileData);
+        } else {
+            profile = createProfile(profileData);
+        }
+
+        const profileId = await saveMappingProfile(profile);
+        currentMappingProfileId = profileId;
+
+        alert("Профиль сохранен");
+        await updateMappingProfileSelect();
+        await loadMappingProfiles();
+    } catch (error) {
+        console.error('[MappingProfiles] Error saving profile:', error);
+        alert(`Ошибка сохранения профиля: ${error.message}`);
+    }
+}
+
+// Удаление профиля
+async function deleteMappingProfileFromEditor() {
+    if (!currentMappingProfileId) {
+        alert("Выберите профиль для удаления");
+        return;
+    }
+
+    if (!confirm("Удалить этот профиль?")) {
+        return;
+    }
+
+    try {
+        await deleteMappingProfile(currentMappingProfileId);
+        currentMappingProfileId = null;
+        if (mappingProfileNameInput) mappingProfileNameInput.value = '';
+        if (mappingProfileDescriptionInput) mappingProfileDescriptionInput.value = '';
+        await updateMappingProfileSelect();
+        await loadMappingProfiles();
+    } catch (error) {
+        console.error('[MappingProfiles] Error deleting profile:', error);
+        alert("Ошибка удаления профиля");
+    }
+}
+
+// Инициализация обработчиков для профилей маппинга
+function initMappingProfilesUI() {
+    // Обновление списка профилей при изменении сущности
+    if (excelImportEntitySelect) {
+        const originalHandler = excelImportEntitySelect.onchange;
+        excelImportEntitySelect.addEventListener('change', async () => {
+            await updateMappingProfileSelect();
+            await renderExcelImportMapping();
+        });
+    }
+
+    // Применение профиля
+    if (mappingProfileApplyBtn) {
+        mappingProfileApplyBtn.addEventListener('click', applyMappingProfile);
+    }
+
+    // Сохранение текущего маппинга
+    if (mappingProfileSaveBtn) {
+        mappingProfileSaveBtn.addEventListener('click', saveCurrentMappingAsProfile);
+    }
+
+    // Показать/скрыть панель управления
+    if (mappingProfilesManageBtn) {
+        mappingProfilesManageBtn.addEventListener('click', () => {
+            if (mappingProfilesPanel) {
+                const isVisible = mappingProfilesPanel.style.display !== 'none';
+                mappingProfilesPanel.style.display = isVisible ? 'none' : 'block';
+                if (!isVisible) {
+                    loadMappingProfiles();
+                }
+            }
+        });
+    }
+
+    // Фильтр по сущности
+    if (mappingProfilesEntityFilter) {
+        mappingProfilesEntityFilter.addEventListener('change', loadMappingProfiles);
+    }
+
+    // Сохранение из редактора
+    if (mappingProfileSaveEditorBtn) {
+        mappingProfileSaveEditorBtn.addEventListener('click', saveMappingProfileFromEditor);
+    }
+
+    // Удаление из редактора
+    if (mappingProfileDeleteEditorBtn) {
+        mappingProfileDeleteEditorBtn.addEventListener('click', deleteMappingProfileFromEditor);
+    }
+
+    // Отмена редактирования
+    if (mappingProfileCancelBtn) {
+        mappingProfileCancelBtn.addEventListener('click', () => {
+            currentMappingProfileId = null;
+            if (mappingProfileNameInput) mappingProfileNameInput.value = '';
+            if (mappingProfileDescriptionInput) mappingProfileDescriptionInput.value = '';
+        });
+    }
+
+    // Инициализация при загрузке
+    updateMappingProfileSelect();
+}
+
+// Инициализация при загрузке страницы
+if (mappingProfileSelect) {
+    initMappingProfilesUI();
+}
+
+/* ============================
+   CREDENTIALS UI (v0.11)
+============================ */
+
+function initCredentialsUI() {
+    if (!credentialsList) return;
+
+    // Загрузка списка Credentials
+    async function loadCredentials() {
+        if (!indexedDBReady && !isAvailable()) {
+            let attempts = 0;
+            while (attempts < 10 && !indexedDBReady && !isAvailable()) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            if (!indexedDBReady && !isAvailable()) {
+                renderCredentialsList([]);
+                return;
+            }
+        }
+
+        try {
+            let credentials = await listCredentials();
+            const typeFilter = credentialFilterType?.value;
+            const authTypeFilter = credentialFilterAuthType?.value;
+            if (typeFilter) credentials = credentials.filter(c => c.type === typeFilter);
+            if (authTypeFilter) credentials = credentials.filter(c => c.authType === authTypeFilter);
+            credentials.sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+            renderCredentialsList(credentials);
+        } catch (error) {
+            console.error('[Credentials] Error loading credentials:', error);
+            renderCredentialsList([]);
+        }
+    }
+
+    // Отображение списка Credentials
+    function renderCredentialsList(credentials) {
+        if (!credentialsList) return;
+
+        if (credentials.length === 0) {
+            credentialsList.innerHTML = "<p class='no-results'>Нет сохраненных креденшалов</p>";
+            return;
+        }
+
+        let html = "";
+        credentials.forEach(cred => {
+            html += `<div class="credential-item ${currentCredentialId === cred.id ? 'active' : ''}" 
+                         data-credential-id="${cred.id}">
+                <div class="credential-item-name">${escapeHtml(cred.name)}</div>
+                <div class="credential-item-meta">
+                    <span class="credential-item-type ${cred.type}">${cred.type === 'technical' ? 'Технический' : 'Пользовательский'}</span>
+                    <span>${cred.authType === 'password' ? 'Password' : 'SSH'}</span>
+                    <span>${cred.username}</span>
+                    ${cred.usageCount ? `<span>Использован ${cred.usageCount} раз</span>` : ''}
+                </div>
+            </div>`;
+        });
+
+        credentialsList.innerHTML = html;
+
+        // Обработчики кликов
+        credentialsList.querySelectorAll('.credential-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const credentialId = item.dataset.credentialId;
+                loadCredentialForEdit(credentialId);
+            });
+        });
+    }
+
+    // Загрузка Credential для редактирования
+    async function loadCredentialForEdit(credentialId) {
+        if (!credentialId) {
+            currentCredentialId = null;
+            if (credentialNameInput) credentialNameInput.value = '';
+            if (credentialTypeSelect) credentialTypeSelect.value = 'technical';
+            if (credentialAuthTypeSelect) credentialAuthTypeSelect.value = 'password';
+            if (credentialUsernameInput) credentialUsernameInput.value = '';
+            if (credentialPasswordInput) credentialPasswordInput.value = '';
+            if (credentialSshKeyInput) credentialSshKeyInput.value = '';
+            if (credentialSshPassphraseInput) credentialSshPassphraseInput.value = '';
+            if (credentialDescriptionInput) credentialDescriptionInput.value = '';
+            updateAuthTypeUI();
+            return;
+        }
+
+        try {
+            const credential = await getCredential(credentialId);
+            if (!credential) {
+                alert("Креденшал не найден");
+                return;
+            }
+
+            currentCredentialId = credentialId;
+            if (credentialNameInput) credentialNameInput.value = credential.name || '';
+            if (credentialTypeSelect) credentialTypeSelect.value = credential.type || 'technical';
+            if (credentialAuthTypeSelect) credentialAuthTypeSelect.value = credential.authType || 'password';
+            if (credentialUsernameInput) credentialUsernameInput.value = credential.username || '';
+            if (credentialDescriptionInput) credentialDescriptionInput.value = credential.description || '';
+
+            // Пароли не показываем (они зашифрованы)
+            if (credentialPasswordInput) credentialPasswordInput.value = '';
+            if (credentialSshKeyInput) credentialSshKeyInput.value = '';
+            if (credentialSshPassphraseInput) credentialSshPassphraseInput.value = '';
+
+            updateAuthTypeUI();
+        } catch (error) {
+            console.error('[Credentials] Error loading credential:', error);
+            alert("Ошибка загрузки креденшала");
+        }
+    }
+
+    // Обновление UI в зависимости от типа аутентификации
+    function updateAuthTypeUI() {
+        const authType = credentialAuthTypeSelect?.value;
+        if (authType === 'ssh') {
+            if (credentialPasswordSection) credentialPasswordSection.style.display = 'none';
+            if (credentialSshSection) credentialSshSection.style.display = 'block';
+        } else {
+            if (credentialPasswordSection) credentialPasswordSection.style.display = 'block';
+            if (credentialSshSection) credentialSshSection.style.display = 'none';
+        }
+    }
+
+    // Сохранение Credential
+    async function saveCredentialHandler() {
+        if (!credentialNameInput || !credentialUsernameInput) return;
+
+        const name = credentialNameInput.value.trim();
+        const username = credentialUsernameInput.value.trim();
+        const type = credentialTypeSelect?.value || 'technical';
+        const authType = credentialAuthTypeSelect?.value || 'password';
+        const description = credentialDescriptionInput?.value.trim() || '';
+
+        if (!name || !username) {
+            alert("Название и имя пользователя обязательны");
+            return;
+        }
+
+        try {
+            let credential;
+            if (currentCredentialId) {
+                const existing = await getCredential(currentCredentialId);
+                if (!existing) {
+                    alert("Креденшал не найден");
+                    return;
+                }
+
+                const updates = {
+                    name,
+                    type,
+                    authType,
+                    username,
+                    description,
+                    updatedAt: new Date().toISOString()
+                };
+
+                if (authType === 'password' && credentialPasswordInput?.value) {
+                    updates.password = credentialPasswordInput.value;
+                } else if (authType === 'ssh') {
+                    if (credentialSshKeyInput?.value) {
+                        updates.sshKey = credentialSshKeyInput.value;
+                    }
+                    if (credentialSshPassphraseInput?.value) {
+                        updates.sshKeyPassphrase = credentialSshPassphraseInput.value;
+                    }
+                }
+
+                credential = await updateCredential(existing, updates);
+            } else {
+                const data = {
+                    name,
+                    type,
+                    authType,
+                    username,
+                    description
+                };
+
+                if (authType === 'password') {
+                    if (!credentialPasswordInput?.value) {
+                        alert("Пароль обязателен для типа аутентификации 'password'");
+                        return;
+                    }
+                    data.password = credentialPasswordInput.value;
+                } else if (authType === 'ssh') {
+                    if (!credentialSshKeyInput?.value) {
+                        alert("SSH ключ обязателен для типа аутентификации 'ssh'");
+                        return;
+                    }
+                    data.sshKey = credentialSshKeyInput.value;
+                    if (credentialSshPassphraseInput?.value) {
+                        data.sshKeyPassphrase = credentialSshPassphraseInput.value;
+                    }
+                }
+
+                credential = await createCredential(data);
+                currentCredentialId = credential.id;
+            }
+
+            await saveCredential(credential);
+            await loadCredentials();
+            alert("Креденшал сохранен");
+        } catch (error) {
+            console.error('[Credentials] Error saving credential:', error);
+            alert(`Ошибка сохранения: ${error.message}`);
+        }
+    }
+
+    // Удаление Credential
+    async function deleteCredentialHandler() {
+        if (!currentCredentialId) {
+            alert("Выберите креденшал для удаления");
+            return;
+        }
+
+        if (!confirm("Удалить этот креденшал?")) return;
+
+        try {
+            await deleteCredential(currentCredentialId);
+            currentCredentialId = null;
+            if (credentialNameInput) credentialNameInput.value = '';
+            if (credentialUsernameInput) credentialUsernameInput.value = '';
+            if (credentialPasswordInput) credentialPasswordInput.value = '';
+            if (credentialSshKeyInput) credentialSshKeyInput.value = '';
+            if (credentialSshPassphraseInput) credentialSshPassphraseInput.value = '';
+            if (credentialDescriptionInput) credentialDescriptionInput.value = '';
+            await loadCredentials();
+        } catch (error) {
+            console.error('[Credentials] Error deleting credential:', error);
+            alert("Ошибка удаления креденшала");
+        }
+    }
+
+    // Копирование Credential
+    async function copyCredentialHandler() {
+        if (!currentCredentialId) {
+            alert("Выберите креденшал для копирования");
+            return;
+        }
+
+        try {
+            const credential = await getCredential(currentCredentialId);
+            if (!credential) {
+                alert("Креденшал не найден");
+                return;
+            }
+
+            const newCredential = await createCredential({
+                ...credential,
+                id: undefined,
+                name: credential.name + ' (копия)',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                usageCount: 0,
+                lastUsedAt: null
+            });
+
+            await saveCredential(newCredential);
+            await loadCredentials();
+            loadCredentialForEdit(newCredential.id);
+            alert("Креденшал скопирован");
+        } catch (error) {
+            console.error('[Credentials] Error copying credential:', error);
+            alert("Ошибка копирования креденшала");
+        }
+    }
+
+    // Переключение видимости пароля
+    if (credentialTogglePasswordBtn && credentialPasswordInput) {
+        credentialTogglePasswordBtn.addEventListener('click', () => {
+            const type = credentialPasswordInput.type === 'password' ? 'text' : 'password';
+            credentialPasswordInput.type = type;
+            credentialTogglePasswordBtn.textContent = type === 'password' ? '👁' : '🙈';
+        });
+    }
+
+    if (credentialToggleSshPassphraseBtn && credentialSshPassphraseInput) {
+        credentialToggleSshPassphraseBtn.addEventListener('click', () => {
+            const type = credentialSshPassphraseInput.type === 'password' ? 'text' : 'password';
+            credentialSshPassphraseInput.type = type;
+            credentialToggleSshPassphraseBtn.textContent = type === 'password' ? '👁' : '🙈';
+        });
+    }
+
+    // Обработчики событий
+    if (credentialNewBtn) {
+        credentialNewBtn.addEventListener('click', () => loadCredentialForEdit(null));
+    }
+
+    if (credentialSaveBtn) {
+        credentialSaveBtn.addEventListener('click', saveCredentialHandler);
+    }
+
+    if (credentialDeleteBtn) {
+        credentialDeleteBtn.addEventListener('click', deleteCredentialHandler);
+    }
+
+    if (credentialCopyBtn) {
+        credentialCopyBtn.addEventListener('click', copyCredentialHandler);
+    }
+
+    if (credentialFilterType) {
+        credentialFilterType.addEventListener('change', loadCredentials);
+    }
+
+    if (credentialFilterAuthType) {
+        credentialFilterAuthType.addEventListener('change', loadCredentials);
+    }
+
+    if (credentialAuthTypeSelect) {
+        credentialAuthTypeSelect.addEventListener('change', updateAuthTypeUI);
+    }
+
+    // Инициализация
+    loadCredentials();
+    updateAuthTypeUI();
+}
+
+/* ============================
+   EXPORT/IMPORT CONFIG UI (v0.12)
+============================ */
+
+function initExportImportUI() {
+    const exportConfigBtn = document.getElementById("exportConfigBtn");
+    const importConfigFileInput = document.getElementById("importConfigFileInput");
+    const importConfigSelectFileBtn = document.getElementById("importConfigSelectFileBtn");
+    const importConfigFileName = document.getElementById("importConfigFileName");
+    const importConfigPreview = document.getElementById("importConfigPreview");
+    const importConfigPreviewContent = document.getElementById("importConfigPreviewContent");
+    const importConfigExecuteBtn = document.getElementById("importConfigExecuteBtn");
+    const importConfigCancelBtn = document.getElementById("importConfigCancelBtn");
+    const importConfigReport = document.getElementById("importConfigReport");
+    const importConfigReportContent = document.getElementById("importConfigReportContent");
+    const importConfigMode = document.getElementById("importConfigMode");
+
+    // Обработчик выбора файла для импорта
+    if (importConfigSelectFileBtn && importConfigFileInput) {
+        importConfigSelectFileBtn.addEventListener('click', () => {
+            importConfigFileInput.click();
+        });
+
+        importConfigFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            importConfigFileName.textContent = file.name;
+
+            try {
+                const data = await parseImportFile(file);
+                const validation = validateImportFile(data);
+
+                if (!validation.valid) {
+                    alert(`Ошибка валидации файла:\n${validation.errors.join('\n')}`);
+                    return;
+                }
+
+                // Показываем предупреждения
+                if (validation.warnings.length > 0) {
+                    const warningsText = validation.warnings.join('\n');
+                    if (!confirm(`Предупреждения:\n${warningsText}\n\nПродолжить импорт?`)) {
+                        return;
+                    }
+                }
+
+                // Предпросмотр
+                const preview = previewImport(data);
+                renderImportPreview(preview, data);
+                importConfigPreview.style.display = 'block';
+                importConfigReport.style.display = 'none';
+            } catch (error) {
+                console.error('[ExportImport] Error parsing file:', error);
+                alert(`Ошибка чтения файла: ${error.message}`);
+            }
+        });
+    }
+
+    // Отображение предпросмотра импорта
+    function renderImportPreview(preview, data) {
+        if (!importConfigPreviewContent) return;
+
+        let html = '';
+
+        if (preview.inventory.environments > 0 || preview.inventory.hosts > 0 ||
+            preview.inventory.services > 0 || preview.inventory.endpoints > 0 ||
+            preview.inventory.snapshots > 0) {
+            html += `<div class="import-preview-item">
+                <strong>Inventory:</strong> 
+                environments: ${preview.inventory.environments}, 
+                hosts: ${preview.inventory.hosts}, 
+                services: ${preview.inventory.services}, 
+                endpoints: ${preview.inventory.endpoints}, 
+                snapshots: ${preview.inventory.snapshots}
+            </div>`;
+        }
+
+        if (preview.files > 0 || preview.sheets > 0) {
+            html += `<div class="import-preview-item">
+                <strong>Excel:</strong> files: ${preview.files}, sheets: ${preview.sheets}
+            </div>`;
+        }
+
+        if (preview.templates > 0) {
+            html += `<div class="import-preview-item"><strong>Templates:</strong> ${preview.templates}</div>`;
+        }
+
+        if (preview.datasets > 0) {
+            html += `<div class="import-preview-item"><strong>Datasets:</strong> ${preview.datasets}</div>`;
+        }
+
+        if (preview.mappingProfiles > 0) {
+            html += `<div class="import-preview-item"><strong>Mapping Profiles:</strong> ${preview.mappingProfiles}</div>`;
+        }
+
+        if (preview.jobs > 0) {
+            html += `<div class="import-preview-item"><strong>Jobs:</strong> ${preview.jobs}</div>`;
+        }
+
+        if (preview.scanResults > 0) {
+            html += `<div class="import-preview-item"><strong>Scan Results:</strong> ${preview.scanResults}</div>`;
+        }
+
+        if (preview.credentials > 0) {
+            html += `<div class="import-preview-item">
+                <strong>Credentials:</strong> ${preview.credentials} 
+                <span class="import-report-warning">⚠️ Могут быть недоступны, если ключ шифрования отличается</span>
+            </div>`;
+        }
+
+        if (preview.matrix > 0) {
+            html += `<div class="import-preview-item"><strong>Version Matrix:</strong> ${preview.matrix} ячеек</div>`;
+        }
+
+        if (!html) {
+            html = '<div class="import-preview-item">Нет данных для импорта</div>';
+        }
+
+        importConfigPreviewContent.innerHTML = html;
+    }
+
+    // Выполнение импорта
+    if (importConfigExecuteBtn && importConfigFileInput) {
+        importConfigExecuteBtn.addEventListener('click', async () => {
+            const file = importConfigFileInput.files[0];
+            if (!file) {
+                alert("Выберите файл для импорта");
+                return;
+            }
+
+            const mode = importConfigMode?.value || 'merge';
+            const modeText = mode === 'replace' ? 'ЗАМЕНИТЬ ВСЕ ДАННЫЕ' : 'ОБЪЕДИНИТЬ С СУЩЕСТВУЮЩИМИ';
+
+            if (!confirm(`Вы уверены, что хотите импортировать конфигурацию?\nРежим: ${modeText}\n\nЭто действие ${mode === 'replace' ? 'ЗАМЕНИТ' : 'ОБЪЕДИНИТ'} существующие данные.`)) {
+                return;
+            }
+
+            try {
+                importConfigExecuteBtn.disabled = true;
+                importConfigExecuteBtn.textContent = 'Импорт...';
+
+                const data = await parseImportFile(file);
+                const report = await importConfiguration(data, mode);
+
+                // Отображение отчета
+                renderImportReport(report);
+                importConfigPreview.style.display = 'none';
+                importConfigReport.style.display = 'block';
+
+                // Очистка выбора файла
+                importConfigFileInput.value = '';
+                importConfigFileName.textContent = '';
+
+                // Обновление UI после импорта
+                if (mode === 'replace') {
+                    // Перезагружаем страницу для полного обновления
+                    if (confirm("Импорт завершен. Перезагрузить страницу для обновления всех данных?")) {
+                        location.reload();
+                    }
+                } else {
+                    // Обновляем только активные вкладки
+                    const activeTab = document.querySelector('.tab.active');
+                    if (activeTab) {
+                        const tabId = activeTab.id;
+                        if (tabId === 'datasets') {
+                            initDatasetsUI();
+                        } else if (tabId === 'scan') {
+                            initScanUI();
+                        } else if (tabId === 'credentials') {
+                            initCredentialsUI();
+                        } else if (tabId === 'templates') {
+                            initTemplatesUI();
+                        } else if (tabId === 'dashboard') {
+                            renderDashboard();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('[ExportImport] Error importing:', error);
+                alert(`Ошибка импорта: ${error.message}`);
+            } finally {
+                importConfigExecuteBtn.disabled = false;
+                importConfigExecuteBtn.textContent = 'Импортировать';
+            }
+        });
+    }
+
+    // Отмена импорта
+    if (importConfigCancelBtn) {
+        importConfigCancelBtn.addEventListener('click', () => {
+            if (importConfigFileInput) importConfigFileInput.value = '';
+            if (importConfigFileName) importConfigFileName.textContent = '';
+            if (importConfigPreview) importConfigPreview.style.display = 'none';
+            if (importConfigReport) importConfigReport.style.display = 'none';
+        });
+    }
+
+    // Отображение отчета об импорте
+    function renderImportReport(report) {
+        if (!importConfigReportContent) return;
+
+        let html = '';
+
+        // Inventory
+        if (report.inventory) {
+            const inv = report.inventory;
+            html += `<div class="import-preview-item">
+                <strong>Inventory:</strong><br>
+                Импортировано: environments: ${inv.imported.environments}, hosts: ${inv.imported.hosts}, 
+                services: ${inv.imported.services}, endpoints: ${inv.imported.endpoints}, snapshots: ${inv.imported.snapshots}<br>
+                ${inv.updated ? `Обновлено: environments: ${inv.updated.environments}, hosts: ${inv.updated.hosts}, 
+                services: ${inv.updated.services}, endpoints: ${inv.updated.endpoints}, snapshots: ${inv.updated.snapshots}` : ''}
+            </div>`;
+        }
+
+        // Excel
+        if (report.excel) {
+            html += `<div class="import-preview-item">
+                <strong>Excel:</strong> files: ${report.excel.imported.files}, sheets: ${report.excel.imported.sheets}
+            </div>`;
+        }
+
+        // Configuration
+        if (report.configuration) {
+            const cfg = report.configuration;
+            html += `<div class="import-preview-item">
+                <strong>Configuration:</strong><br>
+                Templates: ${cfg.imported.templates} (обновлено: ${cfg.updated.templates})<br>
+                Datasets: ${cfg.imported.datasets} (обновлено: ${cfg.updated.datasets})<br>
+                Mapping Profiles: ${cfg.imported.mappingProfiles} (обновлено: ${cfg.updated.mappingProfiles})
+            </div>`;
+        }
+
+        // Jobs
+        if (report.jobs) {
+            html += `<div class="import-preview-item">
+                <strong>Jobs:</strong> ${report.jobs.imported.jobs} (обновлено: ${report.jobs.updated.jobs}), 
+                Scan Results: ${report.jobs.imported.scanResults}
+            </div>`;
+        }
+
+        // Credentials
+        if (report.credentials) {
+            html += `<div class="import-preview-item">
+                <strong>Credentials:</strong> ${report.credentials.imported} (обновлено: ${report.credentials.updated})
+            </div>`;
+        }
+
+        // Matrix
+        if (report.matrix) {
+            html += `<div class="import-preview-item">
+                <strong>Version Matrix:</strong> ${report.matrix.imported} ячеек
+            </div>`;
+        }
+
+        // Ошибки
+        if (report.errors && report.errors.length > 0) {
+            html += `<div class="import-preview-item import-report-error">
+                <strong>Ошибки:</strong><br>
+                ${report.errors.map(e => `• ${e}`).join('<br>')}
+            </div>`;
+        }
+
+        // Предупреждения
+        if (report.warnings && report.warnings.length > 0) {
+            html += `<div class="import-preview-item import-report-warning">
+                <strong>Предупреждения:</strong><br>
+                ${report.warnings.map(w => `• ${w}`).join('<br>')}
+            </div>`;
+        }
+
+        if (!html) {
+            html = '<div class="import-preview-item">Нет данных для отображения</div>';
+        }
+
+        importConfigReportContent.innerHTML = html;
+    }
+
+    // Обработчик экспорта
+    if (exportConfigBtn) {
+        exportConfigBtn.addEventListener('click', async () => {
+            try {
+                exportConfigBtn.disabled = true;
+                exportConfigBtn.textContent = 'Экспорт...';
+
+                // Собираем опции экспорта
+                const options = {
+                    includeInventory: document.getElementById("exportOptionInventory")?.checked ?? true,
+                    includeExcel: document.getElementById("exportOptionExcel")?.checked ?? true,
+                    includeTemplates: document.getElementById("exportOptionTemplates")?.checked ?? true,
+                    includeDatasets: document.getElementById("exportOptionDatasets")?.checked ?? true,
+                    includeMappingProfiles: document.getElementById("exportOptionMappingProfiles")?.checked ?? true,
+                    includeJobs: document.getElementById("exportOptionJobs")?.checked ?? true,
+                    includeScanResults: document.getElementById("exportOptionScanResults")?.checked ?? true,
+                    includeCredentials: document.getElementById("exportOptionCredentials")?.checked ?? false,
+                    includeMatrix: document.getElementById("exportOptionMatrix")?.checked ?? true
+                };
+
+                // Предупреждение о креденшалах
+                if (options.includeCredentials) {
+                    if (!confirm('⚠️ ВНИМАНИЕ: Креденшалы будут экспортированы в зашифрованном виде.\n\nОни могут быть недоступны при импорте на другом компьютере или после закрытия браузера.\n\nПродолжить экспорт с креденшалами?')) {
+                        exportConfigBtn.disabled = false;
+                        exportConfigBtn.textContent = 'Экспортировать конфигурацию';
+                        return;
+                    }
+                }
+
+                // Экспорт
+                const exportData = await exportConfiguration(options);
+                const json = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = generateExportFileName();
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert("Конфигурация успешно экспортирована!");
+            } catch (error) {
+                console.error('[ExportImport] Error exporting:', error);
+                alert(`Ошибка экспорта: ${error.message}`);
+            } finally {
+                exportConfigBtn.disabled = false;
+                exportConfigBtn.textContent = 'Экспортировать конфигурацию';
+            }
+        });
+    }
+}
+
+// Инициализация при активации вкладки
+if (document.getElementById("importExport")) {
+    // Инициализация будет вызвана при активации вкладки
 }

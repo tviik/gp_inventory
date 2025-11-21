@@ -21,12 +21,16 @@
 
 ## Версия
 
-**v0.8** — включает все основные функции:
+**v0.11.1** — включает все основные функции:
 - IndexedDB Storage Engine
 - Global Search Engine
 - Zero-code SQL Engine
 - Template & Zabbix Builder v2
 - Dashboard Analytics
+- Datasets (конструктор данных)
+- Scan / Jobs / Logs
+- Mapping Profiles
+- Credentials (безопасное хранение)
 
 ## Документация
 

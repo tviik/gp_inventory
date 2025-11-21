@@ -332,7 +332,7 @@
         <div class="toc-title">Статус</div>
         <div class="card">
             <div class="card-title">
-                Текущий релиз<span class="badge"><span class="badge-dot"></span>v0.8</span>
+                Текущий релиз<span class="badge"><span class="badge-dot"></span>v0.11.1</span>
             </div>
             <p style="font-size:12px;margin:4px 0 2px 0;">
                 ✓ IndexedDB Storage Engine<br>
@@ -340,7 +340,10 @@
                 ✓ Zero-code SQL Engine<br>
                 ✓ Template & Zabbix Builder v2<br>
                 ✓ Dashboard Analytics<br>
-                ✓ Множественная загрузка файлов<br>
+                ✓ Datasets (конструктор данных)<br>
+                ✓ Scan / Jobs / Logs<br>
+                ✓ Mapping Profiles<br>
+                ✓ Credentials (безопасное хранение)<br>
             </p>
         </div>
     </aside>
@@ -868,7 +871,7 @@ echo "$OUT"</pre>
         <section id="roadmap">
             <h2>10. Roadmap и реализованные версии</h2>
 
-            <h3>10.1. Реализованные версии (v0.4 - v0.8)</h3>
+            <h3>10.1. Реализованные версии (v0.4 - v0.11.1)</h3>
             <ul>
                 <li><strong>v0.4 — IndexedDB Storage Engine</strong> ✓
                     <ul>
@@ -906,19 +909,42 @@ echo "$OUT"</pre>
                         <li>Обзорная статистика по инвентарю;</li>
                         <li>Распределение версий по окружениям и сервисам (графики);</li>
                         <li>Выявление аномалий (отстающие версии);</li>
-                        <li>История изменений версий.</li>
+                        <li>История изменений версий;</li>
+                        <li>Фильтры по окружениям и сервисам.</li>
+                    </ul>
+                </li>
+                <li><strong>v0.9 — Scan / Jobs / Logs</strong> ✓
+                    <ul>
+                        <li>Модель для описания задач опроса (Jobs);</li>
+                        <li>Хранение результатов опроса (ScanResults);</li>
+                        <li>UI для управления задачами и просмотра результатов;</li>
+                        <li>Интеграция с Inventory (автоматическое создание Version Snapshots);</li>
+                        <li>Интеграция с Dashboard (статистика опросов).</li>
+                    </ul>
+                </li>
+                <li><strong>v0.10 — Mapping Profiles</strong> ✓
+                    <ul>
+                        <li>Сохранение профилей маппинга Excel → сущности;</li>
+                        <li>Быстрый выбор профиля при импорте;</li>
+                        <li>Переиспользование маппингов для похожих файлов;</li>
+                        <li>Управление профилями (CRUD);</li>
+                        <li>Счетчик использования профилей.</li>
+                    </ul>
+                </li>
+                <li><strong>v0.11.1 — Credentials & Security</strong> ✓
+                    <ul>
+                        <li>Безопасное хранение креденшалов (технические и пользовательские);</li>
+                        <li>Шифрование паролей через Web Crypto API (AES-GCM);</li>
+                        <li>Поддержка password и SSH key аутентификации;</li>
+                        <li>UI для управления креденшалами;</li>
+                        <li>Интеграция с Jobs (выбор креденшала для опросов);</li>
+                        <li>Ключ шифрования хранится только в sessionStorage (теряется при закрытии браузера).</li>
                     </ul>
                 </li>
             </ul>
 
-            <h3>10.2. Планируемые версии (v0.9+)</h3>
+            <h3>10.2. Планируемые версии (v0.12+)</h3>
             <ul>
-                <li><strong>Профили маппинга Excel</strong>:
-                    <ul>
-                        <li>сохранение набора соответствий "поле сущности → колонка Excel" с именем профиля;</li>
-                        <li>быстрый выбор профиля при импорте нового файла.</li>
-                    </ul>
-                </li>
                 <li><strong>Расширение SQL Engine</strong>:
                     <ul>
                         <li>подзапросы, оконные функции;</li>

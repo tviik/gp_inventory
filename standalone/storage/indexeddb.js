@@ -188,6 +188,17 @@ function initDatabase() {
                 scanResultsStore.createIndex('timestamp', 'timestamp', { unique: false });
                 console.log('[IndexedDB] Created store: scanResults');
             }
+
+            // Store: mappingProfiles (v0.10)
+            if (!database.objectStoreNames.contains(STORES.MAPPING_PROFILES)) {
+                const profilesStore = database.createObjectStore(STORES.MAPPING_PROFILES, {
+                    keyPath: 'id'
+                });
+                profilesStore.createIndex('entity', 'entity', { unique: false });
+                profilesStore.createIndex('name', 'name', { unique: false });
+                profilesStore.createIndex('createdAt', 'createdAt', { unique: false });
+                console.log('[IndexedDB] Created store: mappingProfiles');
+            }
         };
     });
 }
@@ -1640,6 +1651,126 @@ export async function deleteScanResultsByJob(jobId) {
     });
 }
 
+// ============================
+// MAPPING PROFILE OPERATIONS (v0.10)
+// ============================
+
+/**
+ * Сохранение MappingProfile
+ * @param {Object} profile - объект профиля маппинга
+ * @returns {Promise<string>} ID сохраненного профиля
+ */
+export async function saveMappingProfile(profile) {
+    if (!profile.id) {
+        profile.id = generateId('profile_');
+    }
+    if (!profile.createdAt) {
+        profile.createdAt = new Date().toISOString();
+    }
+    profile.updatedAt = new Date().toISOString();
+
+    if (useFallback || !isAvailable()) {
+        const profiles = JSON.parse(localStorage.getItem('mappingProfiles') || '[]');
+        const index = profiles.findIndex(p => p.id === profile.id);
+        if (index >= 0) {
+            profiles[index] = profile;
+        } else {
+            profiles.push(profile);
+        }
+        localStorage.setItem('mappingProfiles', JSON.stringify(profiles));
+        return profile.id;
+    }
+
+    const store = getStore(STORES.MAPPING_PROFILES, 'readwrite');
+
+    return new Promise((resolve, reject) => {
+        const request = store.put(profile);
+        request.onsuccess = () => resolve(profile.id);
+        request.onerror = () => reject(handleError(request.error, 'saveMappingProfile'));
+    });
+}
+
+/**
+ * Получение MappingProfile по ID
+ * @param {string} profileId - ID профиля
+ * @returns {Promise<Object|null>} Profile или null
+ */
+export async function getMappingProfile(profileId) {
+    if (useFallback || !isAvailable()) {
+        const profiles = JSON.parse(localStorage.getItem('mappingProfiles') || '[]');
+        return profiles.find(p => p.id === profileId) || null;
+    }
+
+    const store = getStore(STORES.MAPPING_PROFILES, 'readonly');
+
+    return new Promise((resolve, reject) => {
+        const request = store.get(profileId);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(handleError(request.error, 'getMappingProfile'));
+    });
+}
+
+/**
+ * Получение списка всех MappingProfiles
+ * @returns {Promise<Array>} Массив профилей
+ */
+export async function listMappingProfiles() {
+    if (useFallback || !isAvailable()) {
+        return JSON.parse(localStorage.getItem('mappingProfiles') || '[]');
+    }
+
+    const store = getStore(STORES.MAPPING_PROFILES, 'readonly');
+
+    return new Promise((resolve, reject) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(handleError(request.error, 'listMappingProfiles'));
+    });
+}
+
+/**
+ * Получение MappingProfiles по сущности
+ * @param {string} entity - тип сущности ('environments', 'hosts', 'services', 'endpoints', 'snapshots')
+ * @returns {Promise<Array>} Массив профилей для указанной сущности
+ */
+export async function getMappingProfilesByEntity(entity) {
+    if (useFallback || !isAvailable()) {
+        const profiles = JSON.parse(localStorage.getItem('mappingProfiles') || '[]');
+        return profiles.filter(p => p.entity === entity);
+    }
+
+    const store = getStore(STORES.MAPPING_PROFILES, 'readonly');
+    const index = store.index('entity');
+
+    return new Promise((resolve, reject) => {
+        const request = index.getAll(entity);
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(handleError(request.error, 'getMappingProfilesByEntity'));
+    });
+}
+
+/**
+ * Удаление MappingProfile
+ * @param {string} profileId - ID профиля
+ * @returns {Promise<void>}
+ */
+export async function deleteMappingProfile(profileId) {
+    if (useFallback || !isAvailable()) {
+        const profiles = JSON.parse(localStorage.getItem('mappingProfiles') || '[]');
+        const filtered = profiles.filter(p => p.id !== profileId);
+        localStorage.setItem('mappingProfiles', JSON.stringify(filtered));
+        return;
+    }
+
+    const store = getStore(STORES.MAPPING_PROFILES, 'readwrite');
+
+    return new Promise((resolve, reject) => {
+        const request = store.delete(profileId);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(handleError(request.error, 'deleteMappingProfile'));
+    });
+}
+
 export const storageAPI = {
     init,
     isAvailable,
@@ -1691,7 +1822,13 @@ export const storageAPI = {
     getScanResultsByEndpoint,
     listScanResults,
     deleteScanResult,
-    deleteScanResultsByJob
+    deleteScanResultsByJob,
+    // MappingProfile operations (v0.10)
+    saveMappingProfile,
+    getMappingProfile,
+    listMappingProfiles,
+    getMappingProfilesByEntity,
+    deleteMappingProfile
 };
 
 // Экспорт для использования в других модулях

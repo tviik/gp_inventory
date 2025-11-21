@@ -11,6 +11,11 @@
     <div id="app">
         <header>
             <h1>Version Inventory — Excel + Zabbix (Frontend Only)</h1>
+            <div style="text-align: center; margin: 10px 0;">
+                <a href="onboarding.html" style="color: #60a5fa; text-decoration: none; font-size: 0.9em;">
+                    👋 Новый пользователь? Начни отсюда →
+                </a>
+            </div>
             <nav>
                 <button class="tab-btn" data-tab="dashboard">Dashboard</button>
                 <button class="tab-btn" data-tab="env">Environment</button>
@@ -24,6 +29,7 @@
                 <button class="tab-btn" data-tab="templates">Templates</button>
                 <button class="tab-btn" data-tab="datasets">Datasets</button>
                 <button class="tab-btn" data-tab="scan">Scan / Jobs</button>
+                <button class="tab-btn" data-tab="credentials">Credentials</button>
                 <button class="tab-btn" data-tab="importExport">Import / Export</button>
             </nav>
         </header>
@@ -439,11 +445,72 @@
                 фильтра.
                 Поля пытаются автоматически сопоставляться по названию (host/ip/port/env/service и т.п.).
             </p>
+            <div class="mapping-profiles-toolbar">
+                <label>Профиль маппинга:
+                    <select id="mappingProfileSelect">
+                        <option value="">Нет (автоопределение)</option>
+                    </select>
+                </label>
+                <button id="mappingProfileApplyBtn" class="btn-small">Применить профиль</button>
+                <button id="mappingProfileSaveBtn" class="btn-small">Сохранить как профиль</button>
+                <button id="mappingProfilesManageBtn" class="btn-small">Управление профилями</button>
+            </div>
             <div class="excel-import-mapping-wrapper">
                 <table id="excelImportMappingTable"></table>
             </div>
             <div class="toolbar">
                 <button id="excelImportApplyBtn">Импортировать в выбранную сущность</button>
+            </div>
+
+            <!-- Управление профилями маппинга -->
+            <div id="mappingProfilesPanel" class="mapping-profiles-panel" style="display: none;">
+                <h4>Управление профилями маппинга</h4>
+                <div class="mapping-profiles-content">
+                    <div class="mapping-profiles-list-panel">
+                        <h5>Сохраненные профили</h5>
+                        <div class="toolbar">
+                            <label>Фильтр по сущности:
+                                <select id="mappingProfilesEntityFilter">
+                                    <option value="">Все сущности</option>
+                                    <option value="environments">Environment</option>
+                                    <option value="hosts">Host</option>
+                                    <option value="services">Service</option>
+                                    <option value="endpoints">Endpoint</option>
+                                    <option value="snapshots">Snapshot</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div id="mappingProfilesList" class="mapping-profiles-list">
+                            <!-- Список профилей будет добавлен динамически -->
+                        </div>
+                    </div>
+                    <div class="mapping-profile-editor-panel">
+                        <h5>Редактор профиля</h5>
+                        <div class="mapping-profile-form">
+                            <label>Название:
+                                <input type="text" id="mappingProfileNameInput" placeholder="Название профиля">
+                            </label>
+                            <label>Описание:
+                                <input type="text" id="mappingProfileDescriptionInput"
+                                    placeholder="Описание (опционально)">
+                            </label>
+                            <label>Сущность:
+                                <select id="mappingProfileEntitySelect">
+                                    <option value="hosts">Host</option>
+                                    <option value="services">Service</option>
+                                    <option value="endpoints">Endpoint</option>
+                                    <option value="snapshots">Snapshot</option>
+                                    <option value="environments">Environment</option>
+                                </select>
+                            </label>
+                            <div class="toolbar">
+                                <button id="mappingProfileSaveEditorBtn" class="btn-primary">Сохранить</button>
+                                <button id="mappingProfileDeleteEditorBtn" class="btn-danger">Удалить</button>
+                                <button id="mappingProfileCancelBtn" class="btn-secondary">Отмена</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Превью данных листа -->
@@ -811,6 +878,11 @@
                                 <option value="">Нет (стандартный формат)</option>
                             </select>
                         </label>
+                        <label>Креденшал для аутентификации (опционально):
+                            <select id="scanJobCredentialSelect">
+                                <option value="">Нет (без аутентификации)</option>
+                            </select>
+                        </label>
                         <label>Статус:
                             <select id="scanJobStatusSelect">
                                 <option value="active">Active</option>
@@ -874,6 +946,117 @@
             </div>
         </section>
 
+        <!-- ===== CREDENTIALS ===== -->
+        <section class="tab" id="credentials">
+            <h2>Credentials (Учетные данные)</h2>
+
+            <div class="info-block">
+                <div class="info-block-title">Что это?</div>
+                <div class="info-block-content">
+                    <div class="info-block-section">
+                        <strong>Credentials</strong> — это безопасное хранилище учетных данных для опроса закрытых
+                        контуров. Здесь вы можете сохранять технические и пользовательские учетные данные (пароли, SSH
+                        ключи), которые будут использоваться при выполнении Jobs для опроса endpoints и hosts.
+                    </div>
+                    <div class="info-block-section">
+                        <strong>Как использовать:</strong>
+                        <ul class="info-block-list">
+                            <li>Создайте новый Credential — укажите название, тип (технический/пользовательский), тип
+                                аутентификации (password/SSH)</li>
+                            <li>Введите учетные данные — пароли и SSH ключи автоматически шифруются</li>
+                            <li>Выберите Credential при создании Job — он будет использоваться для аутентификации при
+                                опросе</li>
+                            <li>Пароли хранятся в зашифрованном виде и недоступны после закрытия браузера</li>
+                        </ul>
+                    </div>
+                    <div class="info-block-sources">
+                        <strong>Безопасность:</strong> Все пароли и SSH ключи шифруются через Web Crypto API (AES-GCM).
+                        Ключ шифрования хранится только в sessionStorage (теряется при закрытии браузера).
+                        <strong>Интеграция:</strong> Jobs (выбор креденшала для опроса)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Список Credentials -->
+            <div class="credentials-panel">
+                <div class="credentials-list-panel">
+                    <h3>Сохраненные креденшалы</h3>
+                    <div class="toolbar">
+                        <button id="credentialNewBtn" class="btn-primary">Создать креденшал</button>
+                        <select id="credentialFilterType">
+                            <option value="">Все типы</option>
+                            <option value="technical">Технические</option>
+                            <option value="user">Пользовательские</option>
+                        </select>
+                        <select id="credentialFilterAuthType">
+                            <option value="">Все типы аутентификации</option>
+                            <option value="password">Password</option>
+                            <option value="ssh">SSH Key</option>
+                        </select>
+                    </div>
+                    <div id="credentialsList" class="credentials-list">
+                        <!-- Список креденшалов будет добавлен динамически -->
+                    </div>
+                </div>
+
+                <div class="credential-editor-panel">
+                    <h3>Редактор креденшала</h3>
+                    <div class="credential-form">
+                        <label>Название:
+                            <input type="text" id="credentialNameInput" placeholder="Название креденшала">
+                        </label>
+                        <label>Тип:
+                            <select id="credentialTypeSelect">
+                                <option value="technical">Технический</option>
+                                <option value="user">Пользовательский</option>
+                            </select>
+                        </label>
+                        <label>Тип аутентификации:
+                            <select id="credentialAuthTypeSelect">
+                                <option value="password">Password</option>
+                                <option value="ssh">SSH Key</option>
+                            </select>
+                        </label>
+                        <label>Имя пользователя:
+                            <input type="text" id="credentialUsernameInput" placeholder="username">
+                        </label>
+                        <div id="credentialPasswordSection">
+                            <label>Пароль:
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="credentialPasswordInput" placeholder="Пароль">
+                                    <button type="button" id="credentialTogglePasswordBtn"
+                                        class="toggle-password-btn">👁</button>
+                                </div>
+                            </label>
+                        </div>
+                        <div id="credentialSshSection" style="display: none;">
+                            <label>SSH Private Key:
+                                <textarea id="credentialSshKeyInput" rows="5"
+                                    placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+                            </label>
+                            <label>SSH Key Passphrase (опционально):
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="credentialSshPassphraseInput"
+                                        placeholder="Passphrase для SSH ключа">
+                                    <button type="button" id="credentialToggleSshPassphraseBtn"
+                                        class="toggle-password-btn">👁</button>
+                                </div>
+                            </label>
+                        </div>
+                        <label>Описание:
+                            <textarea id="credentialDescriptionInput" rows="3"
+                                placeholder="Описание креденшала"></textarea>
+                        </label>
+                        <div class="toolbar">
+                            <button id="credentialSaveBtn" class="btn-primary">Сохранить</button>
+                            <button id="credentialDeleteBtn" class="btn-danger">Удалить</button>
+                            <button id="credentialCopyBtn" class="btn-secondary">Копировать</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ===== IMPORT / EXPORT ===== -->
         <section class="tab" id="importExport">
             <h2>Экспорт / Импорт</h2>
@@ -931,6 +1114,89 @@
             <textarea id="importJsonArea" placeholder="Вставьте полный JSON дамп базы"></textarea>
             <div class="toolbar">
                 <button id="importJsonBtn">Импорт с полной заменой</button>
+            </div>
+
+            <!-- ===== ЭКСПОРТ/ИМПОРТ КОНФИГУРАЦИИ ПРОЕКТА (v0.12) ===== -->
+            <h3>Экспорт / Импорт конфигурации проекта</h3>
+            <div class="info-block">
+                <div class="info-block-title">Что это?</div>
+                <div class="info-block-content">
+                    <div class="info-block-section">
+                        <strong>Экспорт/Импорт конфигурации</strong> — это инструмент для создания полной резервной
+                        копии
+                        проекта и восстановления из неё. Экспортирует всю конфигурацию (инвентарь, Excel данные,
+                        шаблоны,
+                        datasets, профили маппинга, Jobs, креденшалы) в один JSON файл.
+                    </div>
+                    <div class="info-block-section">
+                        <strong>Как использовать:</strong>
+                        <ul class="info-block-list">
+                            <li><strong>Экспорт:</strong> Выберите, что включить в экспорт (чекбоксы), нажмите
+                                "Экспортировать
+                                конфигурацию" — файл будет скачан автоматически</li>
+                            <li><strong>Импорт:</strong> Выберите JSON файл конфигурации, просмотрите предпросмотр,
+                                выберите
+                                режим (Заменить/Объединить), нажмите "Импортировать"</li>
+                            <li><strong>Безопасность:</strong> Креденшалы экспортируются в зашифрованном виде и могут
+                                быть
+                                недоступны при импорте на другом компьютере</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Экспорт конфигурации -->
+            <div class="export-config-panel">
+                <h4>Экспорт конфигурации</h4>
+                <div class="export-options">
+                    <label><input type="checkbox" id="exportOptionInventory" checked> Inventory (environments, hosts,
+                        services, endpoints, snapshots)</label>
+                    <label><input type="checkbox" id="exportOptionExcel" checked> Excel Files & Sheets
+                        (метаданные)</label>
+                    <label><input type="checkbox" id="exportOptionTemplates" checked> Templates</label>
+                    <label><input type="checkbox" id="exportOptionDatasets" checked> Datasets</label>
+                    <label><input type="checkbox" id="exportOptionMappingProfiles" checked> Mapping Profiles</label>
+                    <label><input type="checkbox" id="exportOptionJobs" checked> Jobs</label>
+                    <label><input type="checkbox" id="exportOptionScanResults" checked> Scan Results</label>
+                    <label><input type="checkbox" id="exportOptionMatrix" checked> Version Matrix</label>
+                    <label><input type="checkbox" id="exportOptionCredentials"> Credentials (⚠️ зашифрованы, могут быть
+                        недоступны при импорте)</label>
+                </div>
+                <div class="toolbar">
+                    <button id="exportConfigBtn" class="btn-primary">Экспортировать конфигурацию</button>
+                </div>
+            </div>
+
+            <!-- Импорт конфигурации -->
+            <div class="import-config-panel">
+                <h4>Импорт конфигурации</h4>
+                <div class="toolbar">
+                    <input type="file" id="importConfigFileInput" accept=".json" style="display: none;">
+                    <button id="importConfigSelectFileBtn" class="btn-secondary">Выбрать файл</button>
+                    <span id="importConfigFileName" class="hint" style="margin-left: 10px;"></span>
+                </div>
+
+                <!-- Предпросмотр импорта -->
+                <div id="importConfigPreview" class="import-preview" style="display: none;">
+                    <h5>Предпросмотр импорта:</h5>
+                    <div id="importConfigPreviewContent"></div>
+                    <div class="toolbar" style="margin-top: 10px;">
+                        <label>Режим импорта:
+                            <select id="importConfigMode">
+                                <option value="merge">Объединить (добавить новые, обновить существующие)</option>
+                                <option value="replace">Заменить (полная замена всех данных)</option>
+                            </select>
+                        </label>
+                        <button id="importConfigExecuteBtn" class="btn-primary">Импортировать</button>
+                        <button id="importConfigCancelBtn" class="btn-secondary">Отмена</button>
+                    </div>
+                </div>
+
+                <!-- Отчет об импорте -->
+                <div id="importConfigReport" class="import-report" style="display: none;">
+                    <h5>Отчет об импорте:</h5>
+                    <div id="importConfigReportContent"></div>
+                </div>
             </div>
         </section>
     </div>

@@ -188,6 +188,29 @@ function initDatabase() {
                 scanResultsStore.createIndex('timestamp', 'timestamp', { unique: false });
                 console.log('[IndexedDB] Created store: scanResults');
             }
+
+            // Store: mappingProfiles (v0.10)
+            if (!database.objectStoreNames.contains(STORES.MAPPING_PROFILES)) {
+                const profilesStore = database.createObjectStore(STORES.MAPPING_PROFILES, {
+                    keyPath: 'id'
+                });
+                profilesStore.createIndex('entity', 'entity', { unique: false });
+                profilesStore.createIndex('name', 'name', { unique: false });
+                profilesStore.createIndex('createdAt', 'createdAt', { unique: false });
+                console.log('[IndexedDB] Created store: mappingProfiles');
+            }
+
+            // Store: credentials (v0.11)
+            if (!database.objectStoreNames.contains(STORES.CREDENTIALS)) {
+                const credentialsStore = database.createObjectStore(STORES.CREDENTIALS, {
+                    keyPath: 'id'
+                });
+                credentialsStore.createIndex('name', 'name', { unique: false });
+                credentialsStore.createIndex('type', 'type', { unique: false });
+                credentialsStore.createIndex('authType', 'authType', { unique: false });
+                credentialsStore.createIndex('createdAt', 'createdAt', { unique: false });
+                console.log('[IndexedDB] Created store: credentials');
+            }
         };
     });
 }
@@ -1640,6 +1663,259 @@ export async function deleteScanResultsByJob(jobId) {
     });
 }
 
+// ============================
+// MAPPING PROFILE OPERATIONS (v0.10)
+// ============================
+
+/**
+ * Сохранение MappingProfile
+ * @param {Object} profile - объект профиля маппинга
+ * @returns {Promise<string>} ID сохраненного профиля
+ */
+export async function saveMappingProfile(profile) {
+    if (!profile.id) {
+        profile.id = generateId('profile_');
+    }
+    if (!profile.createdAt) {
+        profile.createdAt = new Date().toISOString();
+    }
+    profile.updatedAt = new Date().toISOString();
+
+    if (useFallback || !isAvailable()) {
+        const profiles = JSON.parse(localStorage.getItem('mappingProfiles') || '[]');
+        const index = profiles.findIndex(p => p.id === profile.id);
+        if (index >= 0) {
+            profiles[index] = profile;
+        } else {
+            profiles.push(profile);
+        }
+        localStorage.setItem('mappingProfiles', JSON.stringify(profiles));
+        return profile.id;
+    }
+
+    const store = getStore(STORES.MAPPING_PROFILES, 'readwrite');
+
+    return new Promise((resolve, reject) => {
+        const request = store.put(profile);
+        request.onsuccess = () => resolve(profile.id);
+        request.onerror = () => reject(handleError(request.error, 'saveMappingProfile'));
+    });
+}
+
+/**
+ * Получение MappingProfile по ID
+ * @param {string} profileId - ID профиля
+ * @returns {Promise<Object|null>} Profile или null
+ */
+export async function getMappingProfile(profileId) {
+    if (useFallback || !isAvailable()) {
+        const profiles = JSON.parse(localStorage.getItem('mappingProfiles') || '[]');
+        return profiles.find(p => p.id === profileId) || null;
+    }
+
+    const store = getStore(STORES.MAPPING_PROFILES, 'readonly');
+
+    return new Promise((resolve, reject) => {
+        const request = store.get(profileId);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(handleError(request.error, 'getMappingProfile'));
+    });
+}
+
+/**
+ * Получение списка всех MappingProfiles
+ * @returns {Promise<Array>} Массив профилей
+ */
+export async function listMappingProfiles() {
+    if (useFallback || !isAvailable()) {
+        return JSON.parse(localStorage.getItem('mappingProfiles') || '[]');
+    }
+
+    const store = getStore(STORES.MAPPING_PROFILES, 'readonly');
+
+    return new Promise((resolve, reject) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(handleError(request.error, 'listMappingProfiles'));
+    });
+}
+
+/**
+ * Получение MappingProfiles по сущности
+ * @param {string} entity - тип сущности ('environments', 'hosts', 'services', 'endpoints', 'snapshots')
+ * @returns {Promise<Array>} Массив профилей для указанной сущности
+ */
+export async function getMappingProfilesByEntity(entity) {
+    if (useFallback || !isAvailable()) {
+        const profiles = JSON.parse(localStorage.getItem('mappingProfiles') || '[]');
+        return profiles.filter(p => p.entity === entity);
+    }
+
+    const store = getStore(STORES.MAPPING_PROFILES, 'readonly');
+    const index = store.index('entity');
+
+    return new Promise((resolve, reject) => {
+        const request = index.getAll(entity);
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(handleError(request.error, 'getMappingProfilesByEntity'));
+    });
+}
+
+/**
+ * Удаление MappingProfile
+ * @param {string} profileId - ID профиля
+ * @returns {Promise<void>}
+ */
+export async function deleteMappingProfile(profileId) {
+    if (useFallback || !isAvailable()) {
+        const profiles = JSON.parse(localStorage.getItem('mappingProfiles') || '[]');
+        const filtered = profiles.filter(p => p.id !== profileId);
+        localStorage.setItem('mappingProfiles', JSON.stringify(filtered));
+        return;
+    }
+
+    const store = getStore(STORES.MAPPING_PROFILES, 'readwrite');
+
+    return new Promise((resolve, reject) => {
+        const request = store.delete(profileId);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(handleError(request.error, 'deleteMappingProfile'));
+    });
+}
+
+// ============================
+// CREDENTIALS OPERATIONS (v0.11)
+// ============================
+
+/**
+ * Сохранение Credential
+ * @param {Object} credential - объект Credential
+ * @returns {Promise<void>}
+ */
+export async function saveCredential(credential) {
+    if (useFallback || !isAvailable()) {
+        const credentials = JSON.parse(localStorage.getItem('credentials') || '[]');
+        const index = credentials.findIndex(c => c.id === credential.id);
+        if (index >= 0) {
+            credentials[index] = credential;
+        } else {
+            credentials.push(credential);
+        }
+        localStorage.setItem('credentials', JSON.stringify(credentials));
+        return;
+    }
+
+    const store = getStore(STORES.CREDENTIALS, 'readwrite');
+
+    return new Promise((resolve, reject) => {
+        const request = store.put(credential);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(handleError(request.error, 'saveCredential'));
+    });
+}
+
+/**
+ * Получение Credential по ID
+ * @param {string} credentialId - ID креденшала
+ * @returns {Promise<Object|null>}
+ */
+export async function getCredential(credentialId) {
+    if (useFallback || !isAvailable()) {
+        const credentials = JSON.parse(localStorage.getItem('credentials') || '[]');
+        return credentials.find(c => c.id === credentialId) || null;
+    }
+
+    const store = getStore(STORES.CREDENTIALS, 'readonly');
+
+    return new Promise((resolve, reject) => {
+        const request = store.get(credentialId);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(handleError(request.error, 'getCredential'));
+    });
+}
+
+/**
+ * Получение списка всех Credentials
+ * @returns {Promise<Array<Object>>}
+ */
+export async function listCredentials() {
+    if (useFallback || !isAvailable()) {
+        return JSON.parse(localStorage.getItem('credentials') || '[]');
+    }
+
+    const store = getStore(STORES.CREDENTIALS, 'readonly');
+
+    return new Promise((resolve, reject) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(handleError(request.error, 'listCredentials'));
+    });
+}
+
+/**
+ * Получение Credentials по типу
+ * @param {string} type - тип ('technical' | 'user')
+ * @returns {Promise<Array<Object>>}
+ */
+export async function getCredentialsByType(type) {
+    if (useFallback || !isAvailable()) {
+        const credentials = JSON.parse(localStorage.getItem('credentials') || '[]');
+        return credentials.filter(c => c.type === type);
+    }
+
+    const store = getStore(STORES.CREDENTIALS, 'readonly');
+    const index = store.index('type');
+
+    return new Promise((resolve, reject) => {
+        const request = index.getAll(type);
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(handleError(request.error, 'getCredentialsByType'));
+    });
+}
+
+/**
+ * Получение Credentials по типу аутентификации
+ * @param {string} authType - тип аутентификации ('password' | 'ssh')
+ * @returns {Promise<Array<Object>>}
+ */
+export async function getCredentialsByAuthType(authType) {
+    if (useFallback || !isAvailable()) {
+        const credentials = JSON.parse(localStorage.getItem('credentials') || '[]');
+        return credentials.filter(c => c.authType === authType);
+    }
+
+    const store = getStore(STORES.CREDENTIALS, 'readonly');
+    const index = store.index('authType');
+
+    return new Promise((resolve, reject) => {
+        const request = index.getAll(authType);
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(handleError(request.error, 'getCredentialsByAuthType'));
+    });
+}
+
+/**
+ * Удаление Credential
+ * @param {string} credentialId - ID креденшала
+ * @returns {Promise<void>}
+ */
+export async function deleteCredential(credentialId) {
+    if (useFallback || !isAvailable()) {
+        const credentials = JSON.parse(localStorage.getItem('credentials') || '[]');
+        const filtered = credentials.filter(c => c.id !== credentialId);
+        localStorage.setItem('credentials', JSON.stringify(filtered));
+        return;
+    }
+
+    const store = getStore(STORES.CREDENTIALS, 'readwrite');
+
+    return new Promise((resolve, reject) => {
+        const request = store.delete(credentialId);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(handleError(request.error, 'deleteCredential'));
+    });
+}
+
 export const storageAPI = {
     init,
     isAvailable,
@@ -1691,7 +1967,20 @@ export const storageAPI = {
     getScanResultsByEndpoint,
     listScanResults,
     deleteScanResult,
-    deleteScanResultsByJob
+    deleteScanResultsByJob,
+    // MappingProfile operations (v0.10)
+    saveMappingProfile,
+    getMappingProfile,
+    listMappingProfiles,
+    getMappingProfilesByEntity,
+    deleteMappingProfile,
+    // Credential operations (v0.11)
+    saveCredential,
+    getCredential,
+    listCredentials,
+    getCredentialsByType,
+    getCredentialsByAuthType,
+    deleteCredential
 };
 
 // Экспорт для использования в других модулях

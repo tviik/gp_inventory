@@ -801,6 +801,338 @@ textarea {
     resize: vertical;
 }
 
+/* Mapping Profiles (v0.10) */
+.mapping-profiles-toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 8px;
+    background: #262626;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+
+.mapping-profiles-toolbar label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mapping-profiles-toolbar select {
+    padding: 4px 8px;
+    background: #333;
+    border: 1px solid #555;
+    color: #e0e0e0;
+    border-radius: 3px;
+}
+
+.mapping-profiles-panel {
+    margin-top: 16px;
+    padding: 12px;
+    background: #262626;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+
+.mapping-profiles-content {
+    display: grid;
+    grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
+    gap: 16px;
+}
+
+.mapping-profiles-list-panel,
+.mapping-profile-editor-panel {
+    border: 1px solid #555;
+    padding: 10px;
+    background: #1e1e1e;
+    border-radius: 4px;
+}
+
+.mapping-profiles-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+.mapping-profile-item {
+    background: #333;
+    border: 1px solid #555;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.mapping-profile-item:hover {
+    background: #444;
+}
+
+.mapping-profile-item.active {
+    background: #0077cc;
+    border-color: #0090ff;
+}
+
+.mapping-profile-item-name {
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 4px;
+}
+
+.mapping-profile-item-meta {
+    font-size: 11px;
+    color: #bbb;
+    display: flex;
+    gap: 12px;
+}
+
+.mapping-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mapping-profile-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mapping-profile-form input,
+.mapping-profile-form select {
+    padding: 6px;
+    background: #333;
+    border: 1px solid #555;
+    color: #e0e0e0;
+    border-radius: 3px;
+}
+
+/* ============================
+   CREDENTIALS (v0.11)
+   ============================ */
+
+.credentials-panel {
+    display: grid;
+    grid-template-columns: minmax(300px, 1fr) minmax(400px, 2fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.credentials-list-panel,
+.credential-editor-panel {
+    border: 1px solid #444;
+    background: #262626;
+    padding: 16px;
+    border-radius: 4px;
+}
+
+.credentials-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.credential-item {
+    background: #333;
+    border: 1px solid #555;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.credential-item:hover {
+    background: #444;
+}
+
+.credential-item.active {
+    background: #0077cc;
+    border-color: #0090ff;
+}
+
+.credential-item-name {
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 6px;
+}
+
+.credential-item-meta {
+    font-size: 11px;
+    color: #bbb;
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.credential-item-type {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #444;
+    border-radius: 3px;
+    font-size: 10px;
+}
+
+.credential-item-type.technical {
+    background: #0066cc;
+    color: #fff;
+}
+
+.credential-item-type.user {
+    background: #cc6600;
+    color: #fff;
+}
+
+.credential-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.credential-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.credential-form input[type="text"],
+.credential-form input[type="password"],
+.credential-form select,
+.credential-form textarea {
+    padding: 6px;
+    background: #333;
+    border: 1px solid #555;
+    color: #e0e0e0;
+    border-radius: 3px;
+    font-family: inherit;
+}
+
+.credential-form textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.password-input-wrapper {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    flex: 1;
+}
+
+.toggle-password-btn {
+    background: #444;
+    border: 1px solid #555;
+    color: #e0e0e0;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.toggle-password-btn:hover {
+    background: #555;
+}
+
+@media (max-width: 900px) {
+    .credentials-panel {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .mapping-profiles-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================
+   EXPORT/IMPORT CONFIG (v0.12)
+   ============================ */
+
+.export-config-panel,
+.import-config-panel {
+    border: 1px solid #444;
+    background: #262626;
+    padding: 16px;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+.export-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0;
+    padding: 12px;
+    background: #202020;
+    border: 1px solid #333;
+    border-radius: 4px;
+}
+
+.export-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #e0e0e0;
+}
+
+.export-options input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.import-preview,
+.import-report {
+    margin-top: 16px;
+    padding: 12px;
+    background: #202020;
+    border: 1px solid #333;
+    border-radius: 4px;
+}
+
+.import-preview h5,
+.import-report h5 {
+    margin: 0 0 10px 0;
+    color: #e0e0e0;
+}
+
+#importConfigPreviewContent,
+#importConfigReportContent {
+    font-size: 12px;
+    color: #bbb;
+    line-height: 1.6;
+}
+
+.import-preview-item {
+    margin-bottom: 8px;
+    padding: 6px;
+    background: #262626;
+    border-radius: 3px;
+}
+
+.import-preview-item strong {
+    color: #60a5fa;
+}
+
+.import-report-success {
+    color: #22c55e;
+}
+
+.import-report-error {
+    color: #ef4444;
+}
+
+.import-report-warning {
+    color: #f59e0b;
+}
+
 @media (max-width: 800px) {
     header {
         padding: 8px;
