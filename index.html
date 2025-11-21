@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Version Inventory — Excel + Zabbix</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -10,13 +11,20 @@
 <body>
     <div id="app">
         <header>
-            <h1>Version Inventory — Excel + Zabbix (Frontend Only)</h1>
+            <div class="header-top">
+                <h1>Version Inventory — Excel + Zabbix (Frontend Only)</h1>
+                <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
             <div style="text-align: center; margin: 10px 0;">
                 <a href="onboarding.html" style="color: #60a5fa; text-decoration: none; font-size: 0.9em;">
                     👋 Новый пользователь? Начни отсюда →
                 </a>
             </div>
-            <nav>
+            <nav id="mainNav" class="nav-mobile-hidden">
                 <button class="tab-btn" data-tab="dashboard">Dashboard</button>
                 <button class="tab-btn" data-tab="env">Environment</button>
                 <button class="tab-btn" data-tab="host">Host</button>
@@ -155,7 +163,9 @@
             <div class="toolbar">
                 <button class="add-row" data-entity="environments">Добавить окружение</button>
             </div>
-            <table class="entity-table" data-entity="environments"></table>
+            <div class="table-wrapper">
+                <table class="entity-table" data-entity="environments"></table>
+            </div>
         </section>
 
         <!-- ===== HOST ===== -->
@@ -186,7 +196,9 @@
             <div class="toolbar">
                 <button class="add-row" data-entity="hosts">Добавить хост</button>
             </div>
-            <table class="entity-table" data-entity="hosts"></table>
+            <div class="table-wrapper">
+                <table class="entity-table" data-entity="hosts"></table>
+            </div>
         </section>
 
         <!-- ===== SERVICE ===== -->
@@ -217,7 +229,9 @@
             <div class="toolbar">
                 <button class="add-row" data-entity="services">Добавить сервис</button>
             </div>
-            <table class="entity-table" data-entity="services"></table>
+            <div class="table-wrapper">
+                <table class="entity-table" data-entity="services"></table>
+            </div>
         </section>
 
         <!-- ===== ENDPOINT ===== -->
@@ -249,7 +263,9 @@
             <div class="toolbar">
                 <button class="add-row" data-entity="endpoints">Добавить endpoint</button>
             </div>
-            <table class="entity-table" data-entity="endpoints"></table>
+            <div class="table-wrapper">
+                <table class="entity-table" data-entity="endpoints"></table>
+            </div>
 
             <h3>Автогенерация curl / HTTP-запросов</h3>
             <div class="toolbar">
@@ -288,7 +304,9 @@
             <div class="toolbar">
                 <button class="add-row" data-entity="snapshots">Добавить снапшот вручную</button>
             </div>
-            <table class="entity-table" data-entity="snapshots"></table>
+            <div class="table-wrapper">
+                <table class="entity-table" data-entity="snapshots"></table>
+            </div>
 
             <h3>Импорт результата опроса (JSON)</h3>
             <p class="hint">
@@ -331,7 +349,9 @@
                 </label>
             </div>
             <div class="matrix-wrapper">
-                <table id="versionMatrix"></table>
+                <div class="table-wrapper">
+                    <table id="versionMatrix"></table>
+                </div>
             </div>
             <p class="hint">
                 Ячейки, отличающиеся от эталонного окружения, подсвечены. Данные матрицы хранятся отдельно в
@@ -516,7 +536,9 @@
             <!-- Превью данных листа -->
             <h3>Превью данных листа</h3>
             <div class="excel-table-wrapper">
-                <table id="excelDataTable"></table>
+                <div class="table-wrapper">
+                    <table id="excelDataTable"></table>
+                </div>
             </div>
 
             <!-- Результат строкобилдера -->

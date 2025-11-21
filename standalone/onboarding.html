@@ -218,6 +218,69 @@
         .success-box strong {
             color: #22c55e;
         }
+
+        /* Footer */
+        .onboarding-footer {
+            margin-top: 60px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2b2b2b 100%);
+            border-top: 2px solid #444;
+            border-radius: 12px 12px 0 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 12px;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-trademark {
+            font-size: 0.7em;
+            color: #888;
+            font-weight: 400;
+        }
+
+        .footer-subtitle {
+            font-size: 1.1em;
+            color: #bbb;
+            margin-bottom: 16px;
+            font-style: italic;
+        }
+
+        .footer-description {
+            font-size: 0.95em;
+            color: #999;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .onboarding-footer {
+                padding: 30px 15px;
+                margin-top: 40px;
+            }
+
+            .footer-logo {
+                font-size: 1.4em;
+            }
+
+            .footer-subtitle {
+                font-size: 1em;
+            }
+
+            .footer-description {
+                font-size: 0.9em;
+            }
+        }
     </style>
 </head>
 <body>
@@ -524,6 +587,21 @@
                 <strong>Поддержка:</strong> Все современные браузеры (Chrome, Firefox, Edge, Safari)
             </p>
         </div>
+
+        <!-- Footer -->
+        <footer class="onboarding-footer">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    🔱 PROMTWERK <span class="footer-trademark">_ ТЕАТР ПРОМТОВОЙ АРХИТЕКТУРЫ™</span>
+                </div>
+                <div class="footer-subtitle">
+                    Методика Игоря Богатырчука :)
+                </div>
+                <div class="footer-description">
+                    PROMTWERK — системный и командный подход к разработке AI-продуктов
+                </div>
+            </div>
+        </footer>
     </div>
 </body>
 </html>

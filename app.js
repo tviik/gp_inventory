@@ -352,6 +352,25 @@ function guessColumnForField(field, columns) {
    TABS
 ============================ */
 
+// Mobile menu toggle
+const mobileMenuToggle = document.getElementById("mobileMenuToggle");
+const mainNav = document.getElementById("mainNav");
+
+if (mobileMenuToggle && mainNav) {
+    mobileMenuToggle.addEventListener('click', () => {
+        mobileMenuToggle.classList.toggle('active');
+        mainNav.classList.toggle('nav-mobile-visible');
+    });
+
+    // Закрытие меню при клике вне его
+    document.addEventListener('click', (e) => {
+        if (!mobileMenuToggle.contains(e.target) && !mainNav.contains(e.target)) {
+            mobileMenuToggle.classList.remove('active');
+            mainNav.classList.remove('nav-mobile-visible');
+        }
+    });
+}
+
 document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.onclick = () => {
         document.querySelectorAll(".tab-btn").forEach(x => x.classList.remove("active"));
@@ -365,6 +384,12 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
             return;
         }
         tab.classList.add("active");
+
+        // Закрытие мобильного меню после выбора вкладки
+        if (mobileMenuToggle && mainNav) {
+            mobileMenuToggle.classList.remove('active');
+            mainNav.classList.remove('nav-mobile-visible');
+        }
 
         if (id === "matrix") {
             renderMatrix();

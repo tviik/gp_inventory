@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Version Inventory — Excel + Zabbix</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -10,13 +11,20 @@
 <body>
     <div id="app">
         <header>
-            <h1>Version Inventory — Excel + Zabbix (Frontend Only)</h1>
+            <div class="header-top">
+                <h1>Version Inventory — Excel + Zabbix (Frontend Only)</h1>
+                <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
             <div style="text-align: center; margin: 10px 0;">
                 <a href="onboarding.html" style="color: #60a5fa; text-decoration: none; font-size: 0.9em;">
                     👋 Новый пользователь? Начни отсюда →
                 </a>
             </div>
-            <nav>
+            <nav id="mainNav" class="nav-mobile-hidden">
                 <button class="tab-btn" data-tab="dashboard">Dashboard</button>
                 <button class="tab-btn" data-tab="env">Environment</button>
                 <button class="tab-btn" data-tab="host">Host</button>
@@ -155,7 +163,9 @@
             <div class="toolbar">
                 <button class="add-row" data-entity="environments">Добавить окружение</button>
             </div>
-            <table class="entity-table" data-entity="environments"></table>
+            <div class="table-wrapper">
+                <table class="entity-table" data-entity="environments"></table>
+            </div>
         </section>
 
         <!-- ===== HOST ===== -->
@@ -186,7 +196,9 @@
             <div class="toolbar">
                 <button class="add-row" data-entity="hosts">Добавить хост</button>
             </div>
-            <table class="entity-table" data-entity="hosts"></table>
+            <div class="table-wrapper">
+                <table class="entity-table" data-entity="hosts"></table>
+            </div>
         </section>
 
         <!-- ===== SERVICE ===== -->
@@ -217,7 +229,9 @@
             <div class="toolbar">
                 <button class="add-row" data-entity="services">Добавить сервис</button>
             </div>
-            <table class="entity-table" data-entity="services"></table>
+            <div class="table-wrapper">
+                <table class="entity-table" data-entity="services"></table>
+            </div>
         </section>
 
         <!-- ===== ENDPOINT ===== -->
@@ -249,7 +263,9 @@
             <div class="toolbar">
                 <button class="add-row" data-entity="endpoints">Добавить endpoint</button>
             </div>
-            <table class="entity-table" data-entity="endpoints"></table>
+            <div class="table-wrapper">
+                <table class="entity-table" data-entity="endpoints"></table>
+            </div>
 
             <h3>Автогенерация curl / HTTP-запросов</h3>
             <div class="toolbar">
@@ -288,7 +304,9 @@
             <div class="toolbar">
                 <button class="add-row" data-entity="snapshots">Добавить снапшот вручную</button>
             </div>
-            <table class="entity-table" data-entity="snapshots"></table>
+            <div class="table-wrapper">
+                <table class="entity-table" data-entity="snapshots"></table>
+            </div>
 
             <h3>Импорт результата опроса (JSON)</h3>
             <p class="hint">
@@ -331,7 +349,9 @@
                 </label>
             </div>
             <div class="matrix-wrapper">
-                <table id="versionMatrix"></table>
+                <div class="table-wrapper">
+                    <table id="versionMatrix"></table>
+                </div>
             </div>
             <p class="hint">
                 Ячейки, отличающиеся от эталонного окружения, подсвечены. Данные матрицы хранятся отдельно в
@@ -516,7 +536,9 @@
             <!-- Превью данных листа -->
             <h3>Превью данных листа</h3>
             <div class="excel-table-wrapper">
-                <table id="excelDataTable"></table>
+                <div class="table-wrapper">
+                    <table id="excelDataTable"></table>
+                </div>
             </div>
 
             <!-- Результат строкобилдера -->
@@ -942,6 +964,117 @@
                     placeholder='[{"jobId": "job_123", "endpointId": "ep_1", "status": "success", "response": "{\"version\": \"1.0.0\"}"}]'></textarea>
                 <div class="toolbar">
                     <button id="scanImportResultsBtn" class="btn-primary">Импортировать результаты</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== CREDENTIALS ===== -->
+        <section class="tab" id="credentials">
+            <h2>Credentials (Учетные данные)</h2>
+
+            <div class="info-block">
+                <div class="info-block-title">Что это?</div>
+                <div class="info-block-content">
+                    <div class="info-block-section">
+                        <strong>Credentials</strong> — это безопасное хранилище учетных данных для опроса закрытых
+                        контуров. Здесь вы можете сохранять технические и пользовательские учетные данные (пароли, SSH
+                        ключи), которые будут использоваться при выполнении Jobs для опроса endpoints и hosts.
+                    </div>
+                    <div class="info-block-section">
+                        <strong>Как использовать:</strong>
+                        <ul class="info-block-list">
+                            <li>Создайте новый Credential — укажите название, тип (технический/пользовательский), тип
+                                аутентификации (password/SSH)</li>
+                            <li>Введите учетные данные — пароли и SSH ключи автоматически шифруются</li>
+                            <li>Выберите Credential при создании Job — он будет использоваться для аутентификации при
+                                опросе</li>
+                            <li>Пароли хранятся в зашифрованном виде и недоступны после закрытия браузера</li>
+                        </ul>
+                    </div>
+                    <div class="info-block-sources">
+                        <strong>Безопасность:</strong> Все пароли и SSH ключи шифруются через Web Crypto API (AES-GCM).
+                        Ключ шифрования хранится только в sessionStorage (теряется при закрытии браузера).
+                        <strong>Интеграция:</strong> Jobs (выбор креденшала для опроса)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Список Credentials -->
+            <div class="credentials-panel">
+                <div class="credentials-list-panel">
+                    <h3>Сохраненные креденшалы</h3>
+                    <div class="toolbar">
+                        <button id="credentialNewBtn" class="btn-primary">Создать креденшал</button>
+                        <select id="credentialFilterType">
+                            <option value="">Все типы</option>
+                            <option value="technical">Технические</option>
+                            <option value="user">Пользовательские</option>
+                        </select>
+                        <select id="credentialFilterAuthType">
+                            <option value="">Все типы аутентификации</option>
+                            <option value="password">Password</option>
+                            <option value="ssh">SSH Key</option>
+                        </select>
+                    </div>
+                    <div id="credentialsList" class="credentials-list">
+                        <!-- Список креденшалов будет добавлен динамически -->
+                    </div>
+                </div>
+
+                <div class="credential-editor-panel">
+                    <h3>Редактор креденшала</h3>
+                    <div class="credential-form">
+                        <label>Название:
+                            <input type="text" id="credentialNameInput" placeholder="Название креденшала">
+                        </label>
+                        <label>Тип:
+                            <select id="credentialTypeSelect">
+                                <option value="technical">Технический</option>
+                                <option value="user">Пользовательский</option>
+                            </select>
+                        </label>
+                        <label>Тип аутентификации:
+                            <select id="credentialAuthTypeSelect">
+                                <option value="password">Password</option>
+                                <option value="ssh">SSH Key</option>
+                            </select>
+                        </label>
+                        <label>Имя пользователя:
+                            <input type="text" id="credentialUsernameInput" placeholder="username">
+                        </label>
+                        <div id="credentialPasswordSection">
+                            <label>Пароль:
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="credentialPasswordInput" placeholder="Пароль">
+                                    <button type="button" id="credentialTogglePasswordBtn"
+                                        class="toggle-password-btn">👁</button>
+                                </div>
+                            </label>
+                        </div>
+                        <div id="credentialSshSection" style="display: none;">
+                            <label>SSH Private Key:
+                                <textarea id="credentialSshKeyInput" rows="5"
+                                    placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+                            </label>
+                            <label>SSH Key Passphrase (опционально):
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="credentialSshPassphraseInput"
+                                        placeholder="Passphrase для SSH ключа">
+                                    <button type="button" id="credentialToggleSshPassphraseBtn"
+                                        class="toggle-password-btn">👁</button>
+                                </div>
+                            </label>
+                        </div>
+                        <label>Описание:
+                            <textarea id="credentialDescriptionInput" rows="3"
+                                placeholder="Описание креденшала"></textarea>
+                        </label>
+                        <div class="toolbar">
+                            <button id="credentialSaveBtn" class="btn-primary">Сохранить</button>
+                            <button id="credentialDeleteBtn" class="btn-danger">Удалить</button>
+                            <button id="credentialCopyBtn" class="btn-secondary">Копировать</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>

@@ -908,6 +908,144 @@ textarea {
     border-radius: 3px;
 }
 
+/* ============================
+   CREDENTIALS (v0.11)
+   ============================ */
+
+.credentials-panel {
+    display: grid;
+    grid-template-columns: minmax(300px, 1fr) minmax(400px, 2fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.credentials-list-panel,
+.credential-editor-panel {
+    border: 1px solid #444;
+    background: #262626;
+    padding: 16px;
+    border-radius: 4px;
+}
+
+.credentials-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.credential-item {
+    background: #333;
+    border: 1px solid #555;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.credential-item:hover {
+    background: #444;
+}
+
+.credential-item.active {
+    background: #0077cc;
+    border-color: #0090ff;
+}
+
+.credential-item-name {
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 6px;
+}
+
+.credential-item-meta {
+    font-size: 11px;
+    color: #bbb;
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.credential-item-type {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #444;
+    border-radius: 3px;
+    font-size: 10px;
+}
+
+.credential-item-type.technical {
+    background: #0066cc;
+    color: #fff;
+}
+
+.credential-item-type.user {
+    background: #cc6600;
+    color: #fff;
+}
+
+.credential-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.credential-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.credential-form input[type="text"],
+.credential-form input[type="password"],
+.credential-form select,
+.credential-form textarea {
+    padding: 6px;
+    background: #333;
+    border: 1px solid #555;
+    color: #e0e0e0;
+    border-radius: 3px;
+    font-family: inherit;
+}
+
+.credential-form textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.password-input-wrapper {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    flex: 1;
+}
+
+.toggle-password-btn {
+    background: #444;
+    border: 1px solid #555;
+    color: #e0e0e0;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.toggle-password-btn:hover {
+    background: #555;
+}
+
+@media (max-width: 900px) {
+    .credentials-panel {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 900px) {
     .mapping-profiles-content {
         grid-template-columns: 1fr;
@@ -995,12 +1133,299 @@ textarea {
     color: #f59e0b;
 }
 
-@media (max-width: 800px) {
+/* ============================
+   MOBILE RESPONSIVE (v0.13)
+   ============================ */
+
+/* Гамбургер-меню */
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mobile-menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1001;
+}
+
+.mobile-menu-toggle span {
+    width: 100%;
+    height: 3px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translate(8px, 8px);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(8px, -8px);
+}
+
+/* Мобильная навигация */
+.nav-mobile-hidden {
+    display: flex;
+}
+
+/* Touch-friendly элементы */
+button, .btn-primary, .btn-secondary, .tab-btn {
+    -webkit-tap-highlight-color: rgba(0, 119, 204, 0.3);
+    touch-action: manipulation;
+    user-select: none;
+}
+
+/* Адаптивные таблицы */
+.table-wrapper,
+.excel-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    margin: 10px 0;
+}
+
+table {
+    min-width: 100%;
+    border-collapse: collapse;
+}
+
+/* Мобильные стили */
+@media (max-width: 768px) {
+    /* Header */
     header {
-        padding: 8px;
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .header-top {
+        margin-bottom: 10px;
+    }
+
+    .mobile-menu-toggle {
+        display: flex;
+    }
+
+    /* Навигация */
+    nav {
+        flex-direction: column;
+        gap: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        width: 100%;
+    }
+
+    nav.nav-mobile-visible {
+        max-height: 1000px;
+        transition: max-height 0.3s ease-in;
+    }
+
+    nav button {
+        width: 100%;
+        padding: 12px;
+        text-align: left;
+        font-size: 14px;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: 1px solid #444;
+        border-bottom: 1px solid #444;
+    }
+
+    nav button:first-child {
+        border-top: 1px solid #444;
+    }
+
+    /* Tabs */
+    .tab {
+        padding: 12px;
+    }
+
+    .tab h2 {
+        font-size: 16px;
+    }
+
+    .tab h3 {
+        font-size: 14px;
+    }
+
+    /* Таблицы - горизонтальный скролл */
+    .table-wrapper,
+    .excel-table-wrapper {
+        margin: 10px -12px;
+        padding: 0 12px;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    table th,
+    table td {
+        padding: 8px 6px;
+        white-space: nowrap;
+    }
+
+    /* Формы */
+    .toolbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .toolbar label {
+        width: 100%;
+    }
+
+    .toolbar input,
+    .toolbar select,
+    .toolbar textarea {
+        width: 100%;
+        font-size: 16px; /* Предотвращает zoom на iOS */
+    }
+
+    /* Кнопки */
+    button, .btn-primary, .btn-secondary {
+        padding: 12px 20px;
+        font-size: 14px;
+        min-height: 44px; /* Touch-friendly размер */
+    }
+
+    /* Info blocks */
+    .info-block {
+        padding: 12px;
+        margin: 10px 0;
+    }
+
+    .info-block-title {
+        font-size: 14px;
+    }
+
+    /* Excel Workspace */
+    .excel-panel {
+        flex-direction: column;
+    }
+
+    .excel-columns-list {
+        max-height: 200px;
+    }
+
+    /* Dashboard */
+    .dashboard-filters {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    /* Панели с двумя колонками */
+    .credentials-panel,
+    .scan-panel,
+    .datasets-panel {
+        flex-direction: column;
+    }
+
+    .credentials-list-panel,
+    .credential-editor-panel,
+    .scan-list-panel,
+    .scan-job-editor-panel,
+    .datasets-list-panel,
+    .dataset-editor-panel {
+        width: 100%;
+    }
+
+    /* Textarea */
+    textarea {
+        font-size: 14px;
+        min-height: 100px;
+    }
+
+    /* Скрытие некоторых элементов на мобильных */
+    .hint {
+        font-size: 11px;
+    }
+}
+
+/* Планшеты */
+@media (min-width: 769px) and (max-width: 1024px) {
+    header {
+        padding: 12px;
+    }
+
+    nav {
+        gap: 8px;
+    }
+
+    nav button {
+        padding: 8px 12px;
+        font-size: 12px;
     }
 
     .tab {
-        padding: 10px;
+        padding: 16px;
     }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+}
+
+/* Улучшение для touch устройств */
+@media (hover: none) and (pointer: coarse) {
+    /* Увеличиваем зоны клика для touch */
+    button, .tab-btn, .btn-primary, .btn-secondary {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Убираем hover эффекты на touch устройствах */
+    nav button:hover {
+        background: #3a3a3a;
+    }
+
+    /* Улучшаем скролл */
+    * {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Предотвращение zoom при фокусе на input (iOS) */
+@media (max-width: 768px) {
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* Старые media queries для совместимости */
+@media (max-width: 900px) {
+    /* Сохраняем существующие стили */
+}
+
+@media (max-width: 800px) {
+    /* Сохраняем существующие стили */
 }

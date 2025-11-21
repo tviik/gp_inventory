@@ -1133,12 +1133,312 @@ textarea {
     color: #f59e0b;
 }
 
-@media (max-width: 800px) {
+/* ============================
+   MOBILE RESPONSIVE (v0.13)
+   ============================ */
+
+/* Гамбургер-меню */
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mobile-menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1001;
+}
+
+.mobile-menu-toggle span {
+    width: 100%;
+    height: 3px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translate(8px, 8px);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(8px, -8px);
+}
+
+/* Мобильная навигация */
+.nav-mobile-hidden {
+    display: flex;
+}
+
+/* Touch-friendly элементы */
+button,
+.btn-primary,
+.btn-secondary,
+.tab-btn {
+    -webkit-tap-highlight-color: rgba(0, 119, 204, 0.3);
+    touch-action: manipulation;
+    user-select: none;
+}
+
+/* Адаптивные таблицы */
+.table-wrapper,
+.excel-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    margin: 10px 0;
+}
+
+table {
+    min-width: 100%;
+    border-collapse: collapse;
+}
+
+/* Мобильные стили */
+@media (max-width: 768px) {
+
+    /* Header */
     header {
-        padding: 8px;
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .header-top {
+        margin-bottom: 10px;
+    }
+
+    .mobile-menu-toggle {
+        display: flex;
+    }
+
+    /* Навигация */
+    nav {
+        flex-direction: column;
+        gap: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        width: 100%;
+    }
+
+    nav.nav-mobile-visible {
+        max-height: 1000px;
+        transition: max-height 0.3s ease-in;
+    }
+
+    nav button {
+        width: 100%;
+        padding: 12px;
+        text-align: left;
+        font-size: 14px;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: 1px solid #444;
+        border-bottom: 1px solid #444;
+    }
+
+    nav button:first-child {
+        border-top: 1px solid #444;
+    }
+
+    /* Tabs */
+    .tab {
+        padding: 12px;
+    }
+
+    .tab h2 {
+        font-size: 16px;
+    }
+
+    .tab h3 {
+        font-size: 14px;
+    }
+
+    /* Таблицы - горизонтальный скролл */
+    .table-wrapper,
+    .excel-table-wrapper {
+        margin: 10px -12px;
+        padding: 0 12px;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    table th,
+    table td {
+        padding: 8px 6px;
+        white-space: nowrap;
+    }
+
+    /* Формы */
+    .toolbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .toolbar label {
+        width: 100%;
+    }
+
+    .toolbar input,
+    .toolbar select,
+    .toolbar textarea {
+        width: 100%;
+        font-size: 16px;
+        /* Предотвращает zoom на iOS */
+    }
+
+    /* Кнопки */
+    button,
+    .btn-primary,
+    .btn-secondary {
+        padding: 12px 20px;
+        font-size: 14px;
+        min-height: 44px;
+        /* Touch-friendly размер */
+    }
+
+    /* Info blocks */
+    .info-block {
+        padding: 12px;
+        margin: 10px 0;
+    }
+
+    .info-block-title {
+        font-size: 14px;
+    }
+
+    /* Excel Workspace */
+    .excel-panel {
+        flex-direction: column;
+    }
+
+    .excel-columns-list {
+        max-height: 200px;
+    }
+
+    /* Dashboard */
+    .dashboard-filters {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    /* Панели с двумя колонками */
+    .credentials-panel,
+    .scan-panel,
+    .datasets-panel {
+        flex-direction: column;
+    }
+
+    .credentials-list-panel,
+    .credential-editor-panel,
+    .scan-list-panel,
+    .scan-job-editor-panel,
+    .datasets-list-panel,
+    .dataset-editor-panel {
+        width: 100%;
+    }
+
+    /* Textarea */
+    textarea {
+        font-size: 14px;
+        min-height: 100px;
+    }
+
+    /* Скрытие некоторых элементов на мобильных */
+    .hint {
+        font-size: 11px;
+    }
+}
+
+/* Планшеты */
+@media (min-width: 769px) and (max-width: 1024px) {
+    header {
+        padding: 12px;
+    }
+
+    nav {
+        gap: 8px;
+    }
+
+    nav button {
+        padding: 8px 12px;
+        font-size: 12px;
     }
 
     .tab {
-        padding: 10px;
+        padding: 16px;
     }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+}
+
+/* Улучшение для touch устройств */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Увеличиваем зоны клика для touch */
+    button,
+    .tab-btn,
+    .btn-primary,
+    .btn-secondary {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Убираем hover эффекты на touch устройствах */
+    nav button:hover {
+        background: #3a3a3a;
+    }
+
+    /* Улучшаем скролл */
+    * {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Предотвращение zoom при фокусе на input (iOS) */
+@media (max-width: 768px) {
+
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* Старые media queries для совместимости */
+@media (max-width: 900px) {
+    /* Сохраняем существующие стили */
+}
+
+@media (max-width: 800px) {
+    /* Сохраняем существующие стили */
 }
